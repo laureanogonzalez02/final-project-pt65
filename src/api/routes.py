@@ -5,12 +5,20 @@ from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
+from sqlalchemy import select
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
 CORS(api)
-
+# creando el PUT para editar la INFO del ususario
+@api.route('/users/<int:user_id>', methods=['PUT'])
+def update_user_info(user_id):
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if not user:
+        return jsonify({"msg":"User not found"}), 404
+    data = request.get_json()
+    
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
