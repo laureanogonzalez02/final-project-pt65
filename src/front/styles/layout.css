@@ -1,0 +1,14 @@
+.app-wrapper {
+  display: flex;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.page-body {
+  padding: 30px;
+  background-color: rgb(217, 224, 228);
+}

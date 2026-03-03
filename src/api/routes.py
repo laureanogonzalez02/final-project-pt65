@@ -20,3 +20,12 @@ def handle_hello():
     }
 
     return jsonify(response_body), 200
+
+@api.route('/users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    if users is not None:
+        users_list = list(map(lambda user: user.serialize(),users))
+
+        return jsonify({"users": users_list}), 200
+    return 'not found', 404
