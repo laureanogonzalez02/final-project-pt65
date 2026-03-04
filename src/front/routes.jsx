@@ -13,16 +13,15 @@ import Login from "./pages/Login";
 import { Staff } from "./pages/Staff";
 export const router = createBrowserRouter(
   createRoutesFromElements(
-
-    <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
-
-
-      <Route path="/" element={<Home />} />
-      <Route path="/single/:theId" element={<Single />} />
-      <Route path="/demo" element={<Demo />} />
-      <Route path="/signup" element={<Signup />} />
+    <>
       <Route path="/login" element={<Login />} />
-      <Route path="/staff" element={<Staff />} />
-    </Route>
+      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
+        <Route path="/" element={<Home />} />
+        <Route path="/single/:theId" element={<Single />} />
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/staff" element={<Staff />} />
+      </Route>
+    </>
   )
 );
