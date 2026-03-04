@@ -7,7 +7,17 @@
   "[javascriptreact]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
   },
-  "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 700,
-  "editor.minimap.enabled": false
+  "sqltools.connections": [
+    {
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "database": "example",
+      "username": "gitpod", 
+      "name": "Postgres_Local"
+    }
+  ]
 }
+  

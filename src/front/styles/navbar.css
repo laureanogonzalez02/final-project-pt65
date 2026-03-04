@@ -1,0 +1,48 @@
+.navbar {
+  height: 70px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ececec;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+.nav-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.search-box {
+  background: #f1f3f4;
+  padding: 8px 15px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 200px;
+}
+
+.btn-appointment {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
