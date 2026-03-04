@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useGlobalContext from "../hooks/useGlobalReducer";
 
 
 const Login = () => {
@@ -9,6 +10,7 @@ const Login = () => {
     const [dni, setDni] = useState("");
     const [isAdmin, setIsAdmin] = useState(false);
     const [error, setError] = useState("");
+    const { dispatch } = useGlobalContext();
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -17,7 +19,7 @@ const Login = () => {
         setError("");
 
         const body = { email, password }
-        if (isAdmin) body.dni = parseInt(dni);
+        if (isAdmin) body.dni = dni;
 
         try {
             const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/login", {
@@ -29,8 +31,7 @@ const Login = () => {
             });
             const data = await response.json();
             if (response.ok) {
-                localStorage.setItem("token", data.access_token);
-                localStorage.setItem("user", JSON.stringify(data.user));
+                dispatch({ type: "login", payload: { token: data.access_token, user: data.user } });
                 navigate("/");
             } else {
                 setError(data.msg || "Error al iniciar sesión");
