@@ -30,6 +30,9 @@ export const Staff = () => {
         getStaff();
     }, []);
 
+    const updateUser = async(e) => {
+        
+    }
 
     return (
         <div className="min-vh-100 py-4 px-5" style={{ backgroundColor: "#f3f4f6" }}>
