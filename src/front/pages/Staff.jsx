@@ -6,7 +6,7 @@ export const Staff = () => {
     const { store, dispatch } = useContext(StoreContext);
 
     const getStaff = async () => {
-        const backendURL = "https://orange-robot-r4vrjrw657w4fx6p6-3001.app.github.dev";
+        const backendURL = import.meta.env.VITE_BACKEND_URL;
         const url = `${backendURL}/api/users`;
 
         try {
@@ -32,7 +32,7 @@ export const Staff = () => {
 
 
     return (
-        <div className="min-vh-100 py-4 px-5" style={{ backgroundColor: "#f3f4f6" }}>
+        <div className=" py-4 px-5" >
             <div className="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h2 className="fw-bold mb-1" style={{ color: "#1e293b" }}>Personal Administrativo</h2>
@@ -59,7 +59,7 @@ export const Staff = () => {
                 ))}
             </div>
 
-            <h5 className="fw-bold mb-4">Equipo Administrativo (5)</h5>
+            <h5 className="fw-bold mb-4">Equipo Administrativo ({store.staffList.length})</h5>
 
             <div className="row g-4">
                 {store.staffList.length > 0 ? (
@@ -75,7 +75,7 @@ export const Staff = () => {
                                         </div>
                                         <div>
                                             <div className="d-flex align-items-center gap-2">
-                                                <h5 className="fw-bold mb-0">{user.full_name.replace(/_/g,' ')}</h5>
+                                                <h5 className="fw-bold mb-0">{user.full_name.replace(/_/g, ' ')}</h5>
                                                 <span className={`badge rounded-pill fw-medium ${user.is_active ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning"}`}>
                                                     {user.is_active ? "Activo" : "Inactivo"}
                                                 </span>
