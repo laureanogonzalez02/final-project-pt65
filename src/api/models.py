@@ -11,11 +11,11 @@ class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     full_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    dni: Mapped[int] = mapped_column(nullable=False, unique=True)
+    dni: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
     email: Mapped[str] = mapped_column(
         String(120), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
-    phone: Mapped[int] = mapped_column(unique=True)
+    phone: Mapped[str] = mapped_column(String(20), unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
