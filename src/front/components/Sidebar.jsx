@@ -88,6 +88,9 @@ export const Sidebar = () => {
                 <NavLink to="/messages" className="sidebar-nav-item">
                     <h1> Messages </h1>
                 </NavLink>
+                <NavLink to="/staff" className="sidebar-nav-item">
+                    <h1> Staff </h1>
+                </NavLink>
             </nav>
             <div className="profile-container">
                 {isOpen && (
