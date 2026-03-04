@@ -69,6 +69,11 @@ export const Sidebar = () => {
         };
     }, []);
 
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+    };
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
@@ -94,15 +99,15 @@ export const Sidebar = () => {
             </nav>
             <div className="profile-container">
                 {isOpen && (
-                    <div className="dropdown-menu-up">
+                    <div className="dropdown-menu-up" ref={dropdownMenuRef}>
                         <ul>
                             <li> {svgProfile} Ver Perfil</li>
                             <li> {svgSettings} Configuración</li>
-                            <li className="logout">{svgLogout} Cerrar Sesión</li>
+                            <li className="logout" onClick={handleLogout}>{svgLogout} Cerrar Sesión</li>
                         </ul>
                     </div>
                 )}
-                <div className="user-profile" onClick={() => setIsOpen(!isOpen)} ref={dropdownMenuRef}>
+                <div className="user-profile" onClick={() => setIsOpen(!isOpen)} >
                     <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="User" />
                     <div className="user-info">
                         <span className="user-name">Administrador</span>

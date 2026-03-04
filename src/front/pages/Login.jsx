@@ -31,7 +31,7 @@ const Login = () => {
             if (response.ok) {
                 localStorage.setItem("token", data.access_token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-                navigate("/dashboard");
+                navigate("/");
             } else {
                 setError(data.msg || "Error al iniciar sesión");
             }
