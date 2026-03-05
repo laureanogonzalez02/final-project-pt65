@@ -11,7 +11,13 @@ export const Staff = () => {
 
         try {
             console.log("Intentando fetch a:", url);
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.token}`
+                }
+            });
             if (!response.ok) throw new Error("Error loading staff");
             const data = await response.json();
 
