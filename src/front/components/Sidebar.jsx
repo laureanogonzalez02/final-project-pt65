@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, Link } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
+import { StoreContext } from "../hooks/useGlobalReducer";
 import "../styles/sidebar.css";
 
 const svgProfile =
@@ -53,8 +54,21 @@ const svgLogout =
 
 
 export const Sidebar = () => {
+    const { store, dispatch } = useContext(StoreContext);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownMenuRef = useRef(null);
+    const capitalizeName = (name) => {
+        return name
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+    };
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownMenuRef.current && !dropdownMenuRef.current.contains(event.target)) {
@@ -69,11 +83,7 @@ export const Sidebar = () => {
         };
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
-    };
+
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
@@ -110,8 +120,8 @@ export const Sidebar = () => {
                 <div className="user-profile" onClick={() => setIsOpen(!isOpen)} >
                     <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="User" />
                     <div className="user-info">
-                        <span className="user-name">Administrador</span>
-                        <span className="user-role">Admin Profile</span>
+                        <span className="user-name">{capitalizeName(store.user?.full_name)}</span>
+                        <span className="user-role">{store.user?.role}</span>
                     </div>
                 </div>
             </div>
