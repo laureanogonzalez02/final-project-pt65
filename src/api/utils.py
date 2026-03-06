@@ -1,4 +1,6 @@
-from flask import jsonify, url_for
+from flask import jsonify, url_for, current_app
+from datetime import datetime, timezone, timedelta
+import jwt
 
 class APIException(Exception):
     status_code = 400
@@ -39,3 +41,36 @@ def generate_sitemap(app):
         <p>Start working on your project by following the <a href="https://start.4geeksacademy.com/starters/full-stack" target="_blank">Quick Start</a></p>
         <p>Remember to specify a real endpoint path like: </p>
         <ul style="text-align: left;">"""+links_html+"</ul></div>"
+
+def generate_reset_token(user_id):
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.utcnow() + timedelta(minutes=15),
+        "type": "password_reset"
+    }
+
+    token = jwt.encode(
+        payload,
+        current_app.config["SECRET_KEY"],
+        algorithm="HS256"
+    )
+
+    return token
+
+def verify_reset_token(token):
+    try:
+        payload = jwt.decode(
+            token,
+            current_app.config["SECRET_KEY"],
+            algorithms=["HS256"]
+        )
+
+        if payload.get("type") != "password_reset":
+            return None
+
+        return payload["user_id"]
+
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None

@@ -1,13 +1,16 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
-from flask import Flask, request, jsonify, url_for, Blueprint
+import os
+from flask import Flask, request, jsonify, url_for, Blueprint, current_app
 from api.models import db, User
-from api.utils import generate_sitemap, APIException
+from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token
+from api import db, mail
+from flask_mail import Message
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import select
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 api = Blueprint('api', __name__)
@@ -240,5 +243,70 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error deleting user", "error": str(e)}), 500
-    
 
+@api.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"msg": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        token = generate_reset_token(user.id)
+
+        reset_link = f"http://localhost:3000/reset-password?token={token}"
+
+        msg = Message(
+            subject="Password Reset Request",
+            recipients=[user.email]
+        )
+
+        msg.body = f"""
+        Para recuperar tu contraseña hacé click en el siguiente enlace:
+
+        {reset_link}
+
+        Este enlace expira en 15 minutos.
+        """
+
+        mail.send(msg)
+
+    # 🔐 Seguridad: no revelar si el email existe
+    return jsonify({
+        "msg": "If that email exists, a recovery link has been sent."
+    }), 200
+
+
+@api.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+
+    token = data.get("token")
+    new_password = data.get("password")
+
+    if not token or not new_password:
+        return jsonify({
+            "msg": "Token and new password are required"
+        }), 400
+
+    user_id = verify_reset_token(token)
+
+    if not user_id:
+        return jsonify({
+            "msg": "Invalid or expired token"
+        }), 400
+
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Password has been reset successfully"
+    }), 200
