@@ -1,5 +1,7 @@
 .navbar {
   height: 70px;
+  position: fixed;
+  width: calc(100% - 260px);
   background-color: #ffffff;
   border-bottom: 1px solid #ececec;
   display: flex;
