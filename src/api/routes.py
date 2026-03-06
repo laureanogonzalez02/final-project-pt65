@@ -5,7 +5,6 @@ import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
 from api.models import db, User
 from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token
-from api import db, mail
 from flask_mail import Message
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -272,7 +271,7 @@ def forgot_password():
         Este enlace expira en 15 minutos.
         """
 
-        mail.send(msg)
+        current_app.extensions['mail'].send(msg)
 
     # 🔐 Seguridad: no revelar si el email existe
     return jsonify({
