@@ -78,15 +78,27 @@ def login():
         return jsonify({"msg": "Missing email or password"}), 400
 
     user = User.query.filter_by(email=email).first()
+    if user and user.is_locked:
+        return jsonify({"msg": "Account locked. Contact support to unlock."}), 401
     if not user or not check_password_hash(user.password_hash, password):
+        if user and user.role == "admin":
+            user.login_attempts = (user.login_attempts or 0) + 1
+            if user.login_attempts >= 3:
+                user.is_locked = True
+            db.session.commit()       
         return jsonify({"msg": "Invalid credentials"}), 401
-
     if user.role == "admin":
         dni = data.get('dni')
         if not dni or dni != user.dni:
+            user.login_attempts = (user.login_attempts or 0) + 1
+            if user.login_attempts >= 3:
+                user.is_locked = True
+            db.session.commit()      
             return jsonify({"msg": "Invalid DNI"}), 401
 
     access_token = create_access_token(identity=str(user.id))
+    user.login_attempts = 0
+    db.session.commit()
     return jsonify(access_token=access_token, user=user.serialize()), 200
 
 # Admin only endpoint - get all users
