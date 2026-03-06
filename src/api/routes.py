@@ -133,6 +133,7 @@ def update_user(user_id):
         return jsonify({"msg": "Unauthorized"}), 403
 
     changes = []
+    was_deactivated = False
 
     def change_register(data, old, new):
         return {
@@ -189,6 +190,7 @@ def update_user(user_id):
         new_active = user.is_active
         changes.append(change_register("is_active", old_active, new_active))
 
+
     if "role" in data and data["role"] != user.role:
         old_role = user.role
         new_role = data["role"]
@@ -203,6 +205,9 @@ def update_user(user_id):
         return jsonify({"msg": "No changes detected"}), 400
 
     db.session.commit()
+
+    if was_deactivated:
+        msg = Message
 
     current_admin = get_jwt_identity()
     date_time = datetime.now(timezone.utc)
