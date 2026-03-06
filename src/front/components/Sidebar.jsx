@@ -58,7 +58,7 @@ export const Sidebar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownMenuRef = useRef(null);
     const capitalizeName = (name) => {
-        if (!name) return "Usuario"; 
+        if (!name) return "Usuario";
         return name
             .toLowerCase()
             .split(' ')
@@ -88,47 +88,75 @@ export const Sidebar = () => {
 
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-header">
-                <div className="logo-icon">DS</div>
-                <span className="logo-text">DocSpot AI</span>
-            </div>
-            <nav className="sidebar-nav">
-                <NavLink to="/" className="sidebar-nav-item">
-                    <h1> Dashboard </h1>
-                </NavLink>
-                <NavLink to="/calendar" className="sidebar-nav-item">
-                    <h1> Calendar </h1>
-                </NavLink>
-                <NavLink to="/patients" className="sidebar-nav-item">
-                    <h1> Patients </h1>
-                </NavLink>
-                <NavLink to="/messages" className="sidebar-nav-item">
-                    <h1> Messages </h1>
-                </NavLink>
-                <NavLink to="/staff" className="sidebar-nav-item">
-                    <h1> Staff </h1>
-                </NavLink>
-            </nav>
-            <div className="profile-container">
-                {isOpen && (
-                    <div className="dropdown-menu-up" ref={dropdownMenuRef}>
-                        <ul>
-                            <li> {svgProfile} Ver Perfil</li>
-                            <li> {svgSettings} Configuración</li>
-                            <li className="logout" onClick={handleLogout}>{svgLogout} Cerrar Sesión</li>
-                        </ul>
+        <>
+            <aside className="sidebar">
+                <div className="sidebar-header">
+                    <div className="logo-icon">DS</div>
+                    <span className="logo-text">DocSpot AI</span>
+                </div>
+                <nav className="sidebar-nav">
+                    <NavLink to="/" className="sidebar-nav-item">
+                        <h1> Dashboard </h1>
+                    </NavLink>
+                    <NavLink to="/calendar" className="sidebar-nav-item">
+                        <h1> Calendar </h1>
+                    </NavLink>
+                    <NavLink to="/patients" className="sidebar-nav-item">
+                        <h1> Patients </h1>
+                    </NavLink>
+                    <NavLink to="/messages" className="sidebar-nav-item">
+                        <h1> Messages </h1>
+                    </NavLink>
+                    <NavLink to="/staff" className="sidebar-nav-item">
+                        <h1> Staff </h1>
+                    </NavLink>
+                </nav>
+                <div className="profile-container">
+                    {isOpen && (
+                        <div className="dropdown-menu-up" ref={dropdownMenuRef}>
+                            <ul>
+                                <li> {svgProfile} Ver Perfil</li>
+                                <li> {svgSettings} Configuración</li>
+                                <li className="logout" data-bs-target="#confirmEditModalSession" data-bs-toggle="modal">
+                                    {svgLogout} Cerrar Sesión
+                                </li>
+                            </ul>
+                        </div>
+                    )}
+                    <div className="user-profile" onClick={() => setIsOpen(!isOpen)} >
+                        <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="User" />
+                        <div className="user-info">
+                            <span className="user-name">{capitalizeName(store.user?.full_name)}</span>
+                            <span className="user-role">{store.user?.role}</span>
+                        </div>
                     </div>
-                )}
-                <div className="user-profile" onClick={() => setIsOpen(!isOpen)} >
-                    <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="User" />
-                    <div className="user-info">
-                        <span className="user-name">{capitalizeName(store.user?.full_name)}</span>
-                        <span className="user-role">{store.user?.role}</span>
+                </div>
+            </aside>
+            <div className="modal fade" id="confirmEditModalSession" tabIndex="-1" aria-labelledby="confirmEditModalLabel" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content rounded-4 shadow border-0">
+                        <div className="modal-header border-0">
+                            <h5 className="modal-title fw-bold" id="confirmEditModalLabel" style={{ color: '#cf1212' }}>Cerrar Sesión de Usuario</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div className="modal-body py-3">
+                            <p>¿Estás seguro de que deseas salir de la cuenta <strong>{store.user?.full_name}</strong>?</p>
+
+                        </div>
+                        <div className="modal-footer border-0">
+                            <button type="button" className="btn btn-light fw-bold" data-bs-dismiss="modal">No, Cancelar</button>
+                            <button
+                                type="button"
+                                className="btn btn-dark fw-bold px-4"
+                                data-bs-dismiss="modal"
+                                onClick={handleLogout}
+                            >
+                                Sí, Confirmar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-
-        </aside>
+        </>
     );
 };
