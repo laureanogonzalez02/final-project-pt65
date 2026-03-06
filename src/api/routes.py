@@ -47,14 +47,18 @@ def signup():
     full_name = data.get('full_name', None)
     phone = data.get('phone', None)
 
-    if not email or not password or not role:
-        return jsonify({"msg": "Missing email or password or role"}), 400
+    if not email or not password or not role or not dni or not full_name or not phone:
+        return jsonify({"msg": "All fields are required"}), 400
 
     password_hash = generate_password_hash(password)
 
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({"msg": "User already exists"}), 409
+    existing_dni = User.query.filter_by(dni=dni).first()
+    if existing_dni:
+        return jsonify({"msg": "DNI already exists"}), 409
+
 
     new_user = User(email=email,
                     password_hash=password_hash,
