@@ -81,3 +81,4 @@ database.db
 test.db
 diagram.png
 __pycache__/
+migrations/
