@@ -52,7 +52,7 @@ export const Staff = () => {
                     <h2 className="fw-bold mb-1" style={{ color: "#1e293b" }}>Personal Administrativo</h2>
                     <p className="text-muted">Gestiona tu equipo</p>
                 </div>
-                <NavLink to="/signup" className="btn btn-primary px-4 py-2 fw-semibold shadow-sm" style={{ backgroundColor: "#000000" }}>
+                <NavLink to="/signup" className="btn btn-primary px-4 py-2 fw-semibold shadow-sm" style={{ backgroundColor: "#2ECC71", border: "none" }}>
                     + Agregar Personal
                 </NavLink>
             </div>
