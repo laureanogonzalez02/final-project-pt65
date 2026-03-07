@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../styles/signup.css";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import ConfirmModal from "../components/ConfirmModal";
 
 const Signup = () => {
     const { store } = useGlobalReducer();
@@ -20,9 +21,10 @@ const Signup = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+
+    const confirmSubmit = async () => {
         setLoading(true);
+        setAlert({ show: false, msg: "", type: "" });
         try {
             const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/signup", {
                 method: "POST",
@@ -61,6 +63,17 @@ const Signup = () => {
             setLoading(false);
         }
     };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (formData.role === "admin") {
+            return;
+        }
+        confirmSubmit();
+    };
+
+
+
 
     return (
         <div className="container py-5">
@@ -110,7 +123,13 @@ const Signup = () => {
                                 <input type="text" className="form-control" name="phone"
                                     value={formData.phone} onChange={handleChange} required />
                             </div>
-                            <button type="submit" className="btn btn-signup w-100 py-2" disabled={loading}>
+                            <button
+                                type={formData.role === "admin" ? "button" : "submit"}
+                                className="btn btn-signup w-100 py-2"
+                                disabled={loading}
+                                data-bs-toggle={formData.role === "admin" ? "modal" : undefined}
+                                data-bs-target={formData.role === "admin" ? "#confirmAdminModal" : undefined}
+                            >
                                 {loading ? "Creando..." : "Crear Usuario"}
                             </button>
                         </form>
@@ -118,6 +137,13 @@ const Signup = () => {
                     </div>
                 </div>
             </div>
+            <ConfirmModal
+                id="confirmAdminModal"
+                title="Confirmar Creación de Admin"
+                message="¿Estás seguro de crear este usuario como administrador?"
+                warning="Los administradores tienen acceso total al sistema."
+                onConfirm={confirmSubmit}
+            />
         </div>
     );
 };
