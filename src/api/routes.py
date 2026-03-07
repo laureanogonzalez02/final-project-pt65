@@ -47,14 +47,18 @@ def signup():
     full_name = data.get('full_name', None)
     phone = data.get('phone', None)
 
-    if not email or not password or not role:
-        return jsonify({"msg": "Missing email or password or role"}), 400
+    if not email or not password or not role or not dni or not full_name or not phone:
+        return jsonify({"msg": "All fields are required"}), 400
 
     password_hash = generate_password_hash(password)
 
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({"msg": "User already exists"}), 409
+    existing_dni = User.query.filter_by(dni=dni).first()
+    if existing_dni:
+        return jsonify({"msg": "DNI already exists"}), 409
+
 
     new_user = User(email=email,
                     password_hash=password_hash,
@@ -78,15 +82,27 @@ def login():
         return jsonify({"msg": "Missing email or password"}), 400
 
     user = User.query.filter_by(email=email).first()
+    if user and user.is_locked:
+        return jsonify({"msg": "Account locked. Contact support to unlock."}), 401
     if not user or not check_password_hash(user.password_hash, password):
+        if user and user.role == "admin":
+            user.login_attempts = (user.login_attempts or 0) + 1
+            if user.login_attempts >= 3:
+                user.is_locked = True
+            db.session.commit()       
         return jsonify({"msg": "Invalid credentials"}), 401
-
     if user.role == "admin":
         dni = data.get('dni')
         if not dni or dni != user.dni:
+            user.login_attempts = (user.login_attempts or 0) + 1
+            if user.login_attempts >= 3:
+                user.is_locked = True
+            db.session.commit()      
             return jsonify({"msg": "Invalid DNI"}), 401
 
     access_token = create_access_token(identity=str(user.id))
+    user.login_attempts = 0
+    db.session.commit()
     return jsonify(access_token=access_token, user=user.serialize()), 200
 
 # Admin only endpoint - get all users

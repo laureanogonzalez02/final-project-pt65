@@ -4,7 +4,6 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 
 const Signup = () => {
     const { store } = useGlobalReducer();
-    const [success, setSuccess] = useState("");
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -13,18 +12,17 @@ const Signup = () => {
         full_name: "",
         phone: ""
     });
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [alert, setAlert] = useState({ show: false, msg: "", type: "" });
 
     const handleChange = (e) => {
+        if (alert.show) setAlert({ show: false, msg: "", type: "" });
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError("");
-        setSuccess("");
         try {
             const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/signup", {
                 method: "POST",
@@ -36,7 +34,7 @@ const Signup = () => {
             });
             const data = await response.json();
             if (response.ok) {
-                setSuccess("Usuario creado exitosamente");
+                setAlert({ show: true, msg: "Usuario creado exitosamente", type: "success" });
                 setFormData({
                     email: "",
                     password: "",
@@ -47,11 +45,18 @@ const Signup = () => {
                 });
 
             } else {
-                setError(data.msg || "Error al registrar");
+                if (data.msg === "User already exists") {
+                    setAlert({ show: true, msg: "El correo electrónico ya está registrado.", type: "danger" });
+                } else if (data.msg === "DNI already exists") {
+                    setAlert({ show: true, msg: "El DNI ya está registrado en el sistema.", type: "danger" });
+                } else if (data.msg === "All fields are required") {
+                    setAlert({ show: true, msg: "Todos los campos son obligatorios.", type: "warning" });
+                } else {
+                    setAlert({ show: true, msg: data.msg || "Error al registrar", type: "danger" });
+                }
             }
         } catch (error) {
-            console.error("Error:", error);
-            setError("Error de conexión con el servidor");
+            setAlert({ show: true, msg: "Error de conexión con el servidor.", type: "warning" });
         } finally {
             setLoading(false);
         }
@@ -64,8 +69,13 @@ const Signup = () => {
                     <div className="signup-card">
                         <h2 className="text-center mb-4 fw-bold">Crear Usuario</h2>
                         <form onSubmit={handleSubmit}>
-                            {error && <div className="alert alert-danger">{error}</div>}
-                            {success && <div className="alert alert-success">{success}</div>}
+                            {alert.show && (
+                                <div className={`alert alert-${alert.type} alert-dismissible fade show`} role="alert">
+                                    <i className="fa-solid fa-circle-exclamation me-2"></i>
+                                    {alert.msg}
+                                    <button type="button" className="btn-close" onClick={() => setAlert({ ...alert, show: false })} aria-label="Close"></button>
+                                </div>
+                            )}
                             <div className="mb-3">
                                 <label className="form-label">Email</label>
                                 <input type="email" className="form-control" name="email"
