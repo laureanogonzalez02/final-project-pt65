@@ -3,7 +3,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User
+from api.models import db, User, Patient, Specialty, Procedure, Appointment
 from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token
 from flask_mail import Message
 from flask_cors import CORS
@@ -329,3 +329,47 @@ def reset_password():
     return jsonify({
         "msg": "Password has been reset successfully"
     }), 200
+
+
+@api.route('/appointments', methods=['POST'])
+@jwt_required() 
+def create_appointment():
+    body = request.get_json()
+
+    required_fields = [
+        "start_date_time", "end_date_time", "patient_id", 
+        "user_id", "specialty_id", "procedure_id"
+    ]
+    for field in required_fields:
+        if field not in body or not body[field]:
+            return jsonify({"msg": f"El campo {field} es obligatorio"}), 400
+
+    try:
+        start_dt = datetime.fromisoformat(body['start_date_time'])
+        end_dt = datetime.fromisoformat(body['end_date_time'])
+
+        new_appointment = Appointment(
+            start_date_time=start_dt,
+            end_date_time=end_dt,
+            patient_id=body['patient_id'],
+            user_id=body['user_id'],
+            specialty_id=body['specialty_id'],
+            procedure_id=body['procedure_id'],
+            notes=body['procedure_id'], 
+            status="scheduled",
+            confirmed=False
+        )
+
+        db.session.add(new_appointment)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Turno creado exitosamente",
+            "appointment": new_appointment.serialize()
+        }), 201
+
+    except ValueError as e:
+        return jsonify({"msg": "Formato de fecha inválido", "error": str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error en el servidor", "error": str(e)}), 500

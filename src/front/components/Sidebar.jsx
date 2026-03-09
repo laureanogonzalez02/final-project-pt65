@@ -115,10 +115,10 @@ export const Sidebar = () => {
                     {isOpen && (
                         <div className="dropdown-menu-up" ref={dropdownMenuRef}>
                             <ul>
-                                <li> {svgProfile} Ver Perfil</li>
-                                <li> {svgSettings} Configuración</li>
+                                <li> {svgProfile} View Profile</li>
+                                <li> {svgSettings} Settings</li>
                                 <li className="logout" data-bs-target="#confirmEditModalSession" data-bs-toggle="modal">
-                                    {svgLogout} Cerrar Sesión
+                                    {svgLogout} Log Out
                                 </li>
                             </ul>
                         </div>

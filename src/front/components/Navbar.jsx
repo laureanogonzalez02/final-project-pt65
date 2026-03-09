@@ -1,10 +1,11 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
 import "../styles/navbar.css";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
 	const location = useLocation();
-
+	const navigate = useNavigate()
 	const isCalendarView = location.pathname === "/calendar";
 
 	if (isCalendarView) {
@@ -39,7 +40,9 @@ export const Navbar = () => {
 					<i className="bi bi-search"></i>
 					<input type="text" placeholder="Search..." />
 				</div>
-				<button className="btn-appointment">+ New Appointment</button>
+				<button className="btn-appointment" onClick={() => navigate("/new-appointment")}>
+					+ New Appointment
+				</button>
 			</div>
 		</nav>
 	);
