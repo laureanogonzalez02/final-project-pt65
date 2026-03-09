@@ -3,12 +3,12 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User, Appointment
+from api.models import db, User
 from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token
 from flask_mail import Message
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import select, extract
+from sqlalchemy import select
 from datetime import datetime, timezone, timedelta
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
@@ -145,12 +145,11 @@ def update_user(user_id):
 
     current_user = get_jwt_identity()
     admin = db.session.get(User, current_user)
-
     if not admin or admin.role != "admin":
         return jsonify({"msg": "Unauthorized"}), 403
 
     changes = []
-    deactivated_now = False
+    was_deactivated = False
 
     def change_register(data, old, new):
         return {
@@ -172,7 +171,8 @@ def update_user(user_id):
     if "full_name" in data and data["full_name"] != user.full_name:
         old_name = user.full_name
         user.full_name = data["full_name"]
-        changes.append(change_register("full_name", old_name, user.full_name))
+        new_name = user.full_name
+        changes.append(change_register("full_name", old_name, new_name))
 
     if "dni" in data and data["dni"] != user.dni:
         exist_dni = db.session.execute(select(User).where(
@@ -181,7 +181,8 @@ def update_user(user_id):
             return jsonify({"msg": "dni already exist"}), 400
         old_dni = user.dni
         user.dni = data["dni"]
-        changes.append(change_register("dni", old_dni, user.dni))
+        new_dni = user.dni
+        changes.append(change_register("dni", old_dni, new_dni))
 
     if "email" in data and data["email"] != user.email:
         email_exist = db.session.execute(select(User).where(
@@ -190,54 +191,48 @@ def update_user(user_id):
             return jsonify({"msg": "email already exist"}), 400
         old_email = user.email
         user.email = data["email"]
-        changes.append(change_register("email", old_email, user.email))
+        new_email = user.email
+        changes.append(change_register("email", old_email, new_email))
 
     if "phone" in data and data["phone"] != user.phone:
         old_phone = user.phone
         user.phone = data["phone"]
-        changes.append(change_register("phone", old_phone, user.phone))
+        new_phone = user.phone
+        changes.append(change_register("phone", old_phone, new_phone))
 
     if "is_active" in data and data["is_active"] != user.is_active:
         old_active = user.is_active
         user.is_active = data["is_active"]
-        changes.append(change_register("is_active", old_active, user.is_active))
-        if old_active is True and user.is_active is False:
-            deactivated_now = True
+        new_active = user.is_active
+        changes.append(change_register("is_active", old_active, new_active))
+
 
     if "role" in data and data["role"] != user.role:
         old_role = user.role
-        user.role = data["role"]
-        changes.append(change_register("role", old_role, user.role))
+        new_role = data["role"]
+        user.role = new_role
+        changes.append({
+            "field": "role",
+            "old": old_role,
+            "new": new_role
+        })
 
     if not changes:
         return jsonify({"msg": "No changes detected"}), 400
 
     db.session.commit()
 
-    if deactivated_now:
-        msg = Message(
-            subject="Aviso: Tu cuenta ha sido deshabilitada",
-            sender=current_app.config['MAIL_USERNAME'],
-            recipients=[user.email],
-            body=f"Hola {user.full_name}, te informamos que tu cuenta ha sido desactivada por un administrador."
-        )
-        current_app.extensions['mail'].send(msg)
+    if was_deactivated:
+        msg = Message
 
     current_admin = get_jwt_identity()
     date_time = datetime.now(timezone.utc)
 
     changes_resume = {
-        "modified_by": {
-            "id": admin.id,
-            "name": admin.full_name,
-            "role": admin.role
-        },
-        "target_user": {
-            "id": user.id,
-            "name": user.full_name
-        },
-        "details": changes,
-        "timestamp": date_time.isoformat()
+        "modified_by": current_admin,
+        "user_modified": user.id,
+        "changes": changes,
+        "date_time": date_time.isoformat(),
     }
 
     response = {
@@ -282,7 +277,7 @@ def forgot_password():
     if user:
         token = generate_reset_token(user.id)
 
-        reset_link = f"http://localhost:3000/reset-password?token={token}"
+        reset_link = f"http://localhost:5173/reset-password/{token}"
 
         msg = Message(
             subject="Password Reset Request",
@@ -290,12 +285,12 @@ def forgot_password():
         )
 
         msg.body = f"""
-        Para recuperar tu contraseña hacé click en el siguiente enlace:
+Para recuperar tu contraseña hacé click en el siguiente enlace:
 
-        {reset_link}
+{reset_link}
 
-        Este enlace expira en 15 minutos.
-        """
+Este enlace expira en 15 minutos.
+"""
 
         current_app.extensions['mail'].send(msg)
 
@@ -309,7 +304,7 @@ def reset_password():
     data = request.get_json()
 
     token = data.get("token")
-    new_password = data.get("password")
+    new_password = data.get("new_password")
 
     if not token or not new_password:
         return jsonify({
@@ -323,7 +318,7 @@ def reset_password():
             "msg": "Invalid or expired token"
         }), 400
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     if not user:
         return jsonify({"msg": "User not found"}), 404
@@ -334,20 +329,3 @@ def reset_password():
     return jsonify({
         "msg": "Password has been reset successfully"
     }), 200
-
-
-@api.route('/appointments', methods=['GET'])
-@jwt_required()
-def get_appointments():
-    month = request.args.get('month', default=datetime.now().month, type=int)
-    year = request.args.get('year', default=datetime.now().year, type=int)
-
-    stmt = select(Appointment).where(
-        extract('month', Appointment.start_date_time) == month,
-        extract('year', Appointment.start_date_time) == year
-    )
-
-    result = db.session.execute(stmt)
-    appointments = result.scalars().all()
-
-    return jsonify([appo.serialize() for appo in appointments]), 200

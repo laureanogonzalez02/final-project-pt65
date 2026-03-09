@@ -13,11 +13,15 @@ import { EditUser } from "./pages/EditUser";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Staff } from "./pages/Staff";
 import { Calendar } from "./pages/Calendar";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route path="/login" element={<Login />} />
-   
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+
       <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/single/:theId" element={<ProtectedRoute><Single /></ProtectedRoute>} />
