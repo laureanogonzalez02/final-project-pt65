@@ -379,6 +379,25 @@ def create_appointment():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error en el servidor", "error": str(e)}), 500
+    
+@api.route('/appointments/<int:appo_id>', methods=['PUT']) 
+@jwt_required()
+def update_appointment_status(appo_id):
+    body = request.get_json()
+    new_status = body.get("status") 
+
+    appointment = db.session.get(Appointment, appo_id)
+    if not appointment:
+        return jsonify({"msg": "Turno no encontrado"}), 404
+
+    appointment.status = new_status
+    if new_status == "confirmed":
+        appointment.confirmed = True
+    
+    db.session.commit()
+    return jsonify({"msg": f"Turno actualizado a {new_status}"}), 200
+
+
 @api.route('/appointments', methods=['GET'])
 @jwt_required()
 def get_appointments():
@@ -394,3 +413,10 @@ def get_appointments():
     appointments = result.scalars().all()
 
     return jsonify([appo.serialize() for appo in appointments]), 200
+
+@api.route('/procedures', methods=['GET'])
+@jwt_required()
+def get_procedures():
+    procedures = Procedure.query.all()
+    return jsonify([p.serialize() for p in procedures]), 200
+
