@@ -1,18 +1,23 @@
 import { useState } from "react";
 import "../styles/signup.css";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import useMedicalData from "../hooks/useMedicalData";
 
 const NewAppointment = () => {
+    const { specialties, procedures, loadingMedicalData } = useMedicalData();
     const { store } = useGlobalReducer();
-    const [formData, setFormData] = useState({
+
+    const initialFormState = {
         start_date_time: "",
         end_date_time: "",
-        patient_id: "",
-        user_id: store.user ? store.user.id : "",
+        dni: "",
+        user_id: store.user?.id || "",
         specialty_id: "",
         procedure_id: "",
         notes: ""
-    });
+    };
+
+    const [formData, setFormData] = useState(initialFormState);
     const [loading, setLoading] = useState(false);
     const [alert, setAlert] = useState({ show: false, msg: "", type: "" });
 
@@ -27,7 +32,7 @@ const NewAppointment = () => {
         setAlert({ show: false, msg: "", type: "" });
 
         try {
-            const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/appointments", {
+            const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/create-appointments", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -40,10 +45,7 @@ const NewAppointment = () => {
 
             if (response.ok) {
                 setAlert({ show: true, msg: "Cita programada con éxito", type: "success" });
-                setFormData({
-                    start_date_time: "", end_date_time: "", patient_id: "",
-                    user_id: "", specialty_id: "", procedure_id: "", notes: ""
-                });
+                setFormData(initialFormState);
             } else {
                 setAlert({ show: true, msg: data.msg || "Error al crear la cita", type: "danger" });
             }
@@ -82,27 +84,44 @@ const NewAppointment = () => {
                             </div>
 
                             <div className="mb-3">
-                                <label className="form-label">ID del Paciente</label>
-                                <input type="number" className="form-control" name="patient_id"
-                                    value={formData.patient_id} onChange={handleChange} placeholder="Ej: 1" required />
-                            </div>
-
-                            <div className="mb-3">
-                                <label className="form-label">ID del Especialista</label>
-                                <input type="number" className="form-control" name="user_id"
-                                    value={formData.user_id} onChange={handleChange} required />
+                                <label className="form-label">DNI del Paciente</label>
+                                <input type="text" className="form-control" name="dni"
+                                    value={formData.dni} onChange={handleChange} placeholder="Ej: 12345678X" required />
                             </div>
 
                             <div className="row">
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Especialidad (ID)</label>
-                                    <input type="number" className="form-control" name="specialty_id"
-                                        value={formData.specialty_id} onChange={handleChange} required />
+                                <div className="mb-3">
+                                    <label className="form-label">Especialidad</label>
+                                    <select
+                                        className="form-select"
+                                        name="specialty_id"
+                                        value={formData.specialty_id}
+                                        onChange={handleChange}
+                                        required
+                                    >
+                                        <option value="">{loadingMedicalData ? "Cargando..." : "Seleccione especialidad"}</option>
+                                        {specialties.map(spec => (
+                                            <option key={spec.id} value={spec.id}>{spec.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Procedimiento (ID)</label>
-                                    <input type="number" className="form-control" name="procedure_id"
-                                        value={formData.procedure_id} onChange={handleChange} required />
+                                <div className="mb-3">
+                                    <label className="form-label">Procedimiento</label>
+                                    <select
+                                        className="form-select"
+                                        name="procedure_id"
+                                        value={formData.procedure_id}
+                                        onChange={handleChange}
+                                        required
+                                    >
+                                        <option value="">{loadingMedicalData ? "Cargando..." : "Seleccione procedimiento"}</option>
+                                        {procedures
+                                            .filter(proc => !formData.specialty_id || proc.specialty_id == formData.specialty_id)
+                                            .map(proc => (
+                                                <option key={proc.id} value={proc.id}>{proc.name}</option>
+                                            ))
+                                        }
+                                    </select>
                                 </div>
                             </div>
 
