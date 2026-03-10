@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState } from "react";
+import { useEffect, useContext, useState, useMemo } from "react";
 import { StoreContext } from "../hooks/useGlobalReducer";
 import "../styles/calendar.css";
 
@@ -6,8 +6,10 @@ export const Calendar = () => {
     const { store, dispatch } = useContext(StoreContext);
     const [viewDate, setViewDate] = useState(new Date());
 
+    const [procedures, setProcedures] = useState([]);
+    const [selectedProcedure, setSelectedProcedure] = useState("");
+
     const [showDayModal, setShowDayModal] = useState(false);
-    const [selectedDayAppointments, setSelectedDayAppointments] = useState([]);
     const [selectedDayNumber, setSelectedDayNumber] = useState(null);
 
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -51,6 +53,16 @@ export const Calendar = () => {
     useEffect(() => {
         loadData();
     }, [viewDate]);
+
+    const filteredAppos = useMemo(() => {
+        if (!selectedProcedure) return store.appointments || [];
+        return store.appointments.filter(appo => appo.procedure_id === parseInt(selectedProcedure));
+    }, [store.appointments, selectedProcedure]);
+
+    const selectedDayAppointments = useMemo(() => {
+        if (!selectedDayNumber) return [];
+        return filteredAppos.filter(a => new Date(a.start_date_time).getDate() === selectedDayNumber);
+    }, [filteredAppos, selectedDayNumber]);
 
     const updateAppointmentStatus = async (appoId, newStatus) => {
         const token = localStorage.getItem("token");
@@ -106,12 +118,8 @@ export const Calendar = () => {
     }
 
     const handleDayClick = (dayNumber) => {
-        const dayAppos = store.appointments?.filter(a => new Date(a.start_date_time).getDate() === dayNumber) || [];
-        if (dayAppos.length > 0) {
-            setSelectedDayAppointments(dayAppos);
-            setSelectedDayNumber(dayNumber);
-            setShowDayModal(true);
-        }
+        setSelectedDayNumber(dayNumber);
+        setShowDayModal(true);
     };
 
     const handlePrevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
@@ -172,6 +180,44 @@ export const Calendar = () => {
     return (
         <div className="bg-light min-vh-100 p-4">
             <div className="container-fluid">
+                <div className="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+                    <div className="row align-items-center">
+                        <div className="col-md-auto">
+                            <span className="fw-bold text-secondary me-3"><i className="bi bi-funnel"></i> Filtros Globales:</span>
+                        </div>
+                        <div className="col-md-4">
+                            <select
+                                className="form-select form-select-sm border-light bg-light"
+                                value={selectedProcedure}
+                                onChange={(e) => setSelectedProcedure(e.target.value)}
+                            >
+                                <option value="">Todos los procedimientos</option>
+                                {procedures.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="col-md-auto">
+                            {selectedProcedure && (
+                                <button className="btn btn-sm btn-outline-danger rounded-pill px-3" onClick={() => setSelectedProcedure("")}>
+                                    Limpiar Filtros
+                                </button>
+                            )}
+                        </div>
+                        <div className="col text-end">
+                            {selectedProcedure ? (
+                                <span className="badge bg-primary rounded-pill px-3 py-2">
+                                    Filtrando por: {procedures.find(p => p.id == selectedProcedure)?.name}
+                                </span>
+                            ) : (
+                                <span className="badge bg-light text-dark border rounded-pill px-3 py-2 me-2">
+                                    Vista General
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 <div className="row g-4">
                     <div className="col-lg-4">
                         <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
@@ -187,7 +233,6 @@ export const Calendar = () => {
                             </div>
                         </div>
                     </div>
-
                     <div className="col-lg-8">
                         <div className="card border-0 shadow-sm rounded-4 p-4">
                             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -206,6 +251,7 @@ export const Calendar = () => {
                                     <i className="bi bi-chevron-right fw-bold"></i>
                                 </button>
                             </div>
+
                             <div className="calendar-weekdays mb-2 text-center">
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                                     <div key={d} className="fw-bold text-muted x-small">{d}</div>
@@ -227,7 +273,6 @@ export const Calendar = () => {
                     </div>
                 </div>
             </div>
-
             {showDayModal && (
                 <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
                     <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -237,30 +282,37 @@ export const Calendar = () => {
                                 <button type="button" className="btn-close" onClick={() => setShowDayModal(false)}></button>
                             </div>
                             <div className="modal-body p-4">
-                                <div className="list-group list-group-flush">
-                                    {selectedDayAppointments.map(appo => (
-                                        <div key={appo.id} className="list-group-item d-flex justify-content-between align-items-center py-3 border-light rounded-3 mb-2 bg-light shadow-sm">
-                                            <div>
-                                                <h6 className="mb-1 fw-bold">{appo.patient_name}</h6>
-                                                <p className="mb-0 text-muted extra-small">
-                                                    <i className="bi bi-clock me-1"></i>
-                                                    {new Date(appo.start_date_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {appo.procedure_name}
-                                                </p>
-                                                <span className={`badge mt-2 bg-${appo.status === 'confirmed' ? 'success' : appo.status === 'cancelled' ? 'danger' : 'warning'}`}>
-                                                    {appo.status.toUpperCase()}
-                                                </span>
+                                {selectedDayAppointments.length > 0 ? (
+                                    <div className="list-group list-group-flush">
+                                        {selectedDayAppointments.map(appo => (
+                                            <div key={appo.id} className="list-group-item d-flex justify-content-between align-items-center py-3 border-light rounded-3 mb-2 bg-light shadow-sm">
+                                                <div>
+                                                    <h6 className="mb-1 fw-bold">{appo.patient_name}</h6>
+                                                    <p className="mb-0 text-muted extra-small">
+                                                        <i className="bi bi-clock me-1"></i>
+                                                        {new Date(appo.start_date_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - <strong>{appo.procedure_name}</strong>
+                                                    </p>
+                                                    <span className={`badge mt-2 bg-${appo.status === 'confirmed' ? 'success' : appo.status === 'cancelled' ? 'danger' : 'warning'}`}>
+                                                        {appo.status.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <div className="d-flex gap-2">
+                                                    {appo.status !== 'confirmed' && appo.status !== 'cancelled' && (
+                                                        <button className="btn btn-success btn-sm rounded-3" onClick={() => updateAppointmentStatus(appo.id, 'confirmed')}>Confirm</button>
+                                                    )}
+                                                    {appo.status !== 'cancelled' && (
+                                                        <button className="btn btn-outline-danger btn-sm rounded-3" onClick={() => updateAppointmentStatus(appo.id, 'cancelled')}>Cancel</button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="d-flex gap-2">
-                                                {appo.status !== 'confirmed' && appo.status !== 'cancelled' && (
-                                                    <button className="btn btn-success btn-sm rounded-3" onClick={() => updateAppointmentStatus(appo.id, 'confirmed')}>Confirm</button>
-                                                )}
-                                                {appo.status !== 'cancelled' && (
-                                                    <button className="btn btn-outline-danger btn-sm rounded-3" onClick={() => updateAppointmentStatus(appo.id, 'cancelled')}>Cancel</button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-5">
+                                        <i className="bi bi-calendar-x display-4 text-muted"></i>
+                                        <p className="mt-3 text-muted">No hay turnos para los criterios seleccionados.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

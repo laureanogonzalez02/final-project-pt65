@@ -1,6 +1,3 @@
-"""
-This module takes care of starting the API Server, Loading the DB and Adding the endpoints
-"""
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
 from api.models import db, User, Appointment, BlockedSlot
@@ -335,6 +332,75 @@ def reset_password():
     return jsonify({
         "msg": "Password has been reset successfully"
     }), 200
+
+
+@api.route('/create-appointments', methods=['POST'])
+@jwt_required()
+def create_appointment():
+    body = request.get_json()
+        
+    if 'dni' not in body or not body['dni']:
+        return jsonify({"msg": "DNI is required to identify the patient"}), 400
+    
+    patient = Patient.query.filter_by(dni=body['dni']).first()
+
+    if not patient:
+        return jsonify({"msg": "No patient found registered with this DNI"}), 404
+
+    required_fields = [
+        "start_date_time", "end_date_time", 
+        "user_id", "specialty_id", "procedure_id", "dni"
+    ]
+    for field in required_fields:
+        if field not in body or not body[field]:
+            return jsonify({"msg": f"The field '{field}' is required"}), 400
+
+    try:
+        start_dt = datetime.fromisoformat(body['start_date_time'])
+        end_dt = datetime.fromisoformat(body['end_date_time'])
+
+        new_appointment = Appointment(
+            start_date_time=start_dt,
+            end_date_time=end_dt,
+            patient_id=patient.id,
+            user_id=body['user_id'],
+            specialty_id=body['specialty_id'],
+            procedure_id=body['procedure_id'],
+            notes=body['notes'], 
+            status="scheduled",
+            confirmed=False
+        )
+
+        db.session.add(new_appointment)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Appointment created successfully",
+            "appointment": new_appointment.serialize()
+        }), 201
+
+    except ValueError as e:
+        return jsonify({"msg": "Invalid date format", "error": str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Internal server error", "error": str(e)}), 500
+    
+@api.route('/appointments/<int:appo_id>', methods=['PUT']) 
+@jwt_required()
+def update_appointment_status(appo_id):
+    body = request.get_json()
+    new_status = body.get("status") 
+
+    appointment = db.session.get(Appointment, appo_id)
+    if not appointment:
+        return jsonify({"msg": "Turno no encontrado"}), 404
+
+    appointment.status = new_status
+    if new_status == "confirmed":
+        appointment.confirmed = True
+    
+    db.session.commit()
+    return jsonify({"msg": f"Turno actualizado a {new_status}"}), 200
 
 @api.route('/appointments', methods=['GET'])
 @jwt_required()
