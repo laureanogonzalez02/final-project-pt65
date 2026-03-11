@@ -1,5 +1,6 @@
 import { useEffect, useContext, useState, useMemo } from "react";
 import { StoreContext } from "../hooks/useGlobalReducer";
+import ConfirmModal from "../components/ConfirmModal";
 import "../styles/calendar.css";
 
 export const Calendar = () => {
@@ -25,6 +26,8 @@ export const Calendar = () => {
     });
 
     const [editingSlot, setEditingSlot] = useState(null);
+    const [calendarAlert, setCalendarAlert] = useState({ show: false, msg: "", type: "" });
+    const [pendingDeleteSlotId, setPendingDeleteSlotId] = useState(null);
 
     const loadData = async () => {
         const token = localStorage.getItem("token");
@@ -91,18 +94,16 @@ export const Calendar = () => {
             if (resp.ok) {
                 await loadData();
                 setShowDayModal(false);
-                alert(`Turno ${newStatus === 'cancelled' ? 'cancelado' : 'confirmado'} con éxito.`);
+                setCalendarAlert({ show: true, msg: `Turno ${newStatus === 'cancelled' ? 'cancelado' : 'confirmado'} con éxito.`, type: "success" });
             }
         } catch (err) {
             console.error("Error al actualizar turno:", err);
+            setCalendarAlert({ show: true, msg: "Error al actualizar el turno.", type: "danger" });
         }
     };
 
-    const handleCreateSlot = async () => {
+    const confirmSlotAction = async () => {
         const isEditing = editingSlot !== null;
-        const confirmed = window.confirm(isEditing ? "¿Confirmar los cambios en el slot?" : "¿Estás seguro de bloquear este slot?");
-        if (!confirmed) return;
-
         const token = localStorage.getItem("token");
         const url = isEditing ? `${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots/${editingSlot.id}` : `${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots`;
         const method = isEditing ? "PUT" : "POST";
@@ -117,44 +118,41 @@ export const Calendar = () => {
             });
             if (resp.ok) {
                 setShowSlotModal(false);
-                setSlotForm({
-                    start_date_time: "",
-                    end_date_time: "",
-                    reason: ""
-                });
+                setSlotForm({ start_date_time: "", end_date_time: "", reason: "" });
                 setEditingSlot(null);
+                setCalendarAlert({ show: true, msg: isEditing ? "Fechas actualizadas con éxito." : "Fechas bloqueadas con éxito.", type: "success" });
                 await loadData();
             } else {
                 const error = await resp.json();
-                alert(error.msg || "Error al crear el bloqueo.");
+                setCalendarAlert({ show: true, msg: error.msg || "Error al procesar el bloqueo.", type: "danger" });
             }
         } catch (err) {
-            console.error("Error al crear el bloqueo:", err);
+            console.error("Error al procesar el bloqueo:", err);
+            setCalendarAlert({ show: true, msg: "Error de conexión.", type: "danger" });
         }
     }
 
-    const handleDeleteSlot = async (slotId) => {
-        const confirmed = window.confirm("¿Estás seguro de eliminar este slot?");
-        if (!confirmed) return;
-
+    const confirmDeleteSlot = async () => {
+        if (!pendingDeleteSlotId) return;
         const token = localStorage.getItem("token");
         try {
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots/${slotId}`, {
+            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots/${pendingDeleteSlotId}`, {
                 method: "DELETE",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
+                headers: { "Authorization": `Bearer ${token}` }
             });
             if (resp.ok) {
+                setShowDayModal(false);
+                setCalendarAlert({ show: true, msg: "Bloqueo eliminado con éxito.", type: "success" });
                 await loadData();
-                alert("Slot eliminado con éxito.");
             } else {
                 const error = await resp.json();
-                alert(error.msg || "Error al eliminar el slot.");
+                setCalendarAlert({ show: true, msg: error.msg || "Error al eliminar el bloqueo.", type: "danger" });
             }
         } catch (err) {
-            console.error("Error al eliminar el slot:", err);
+            console.error("Error al eliminar el bloqueo:", err);
+            setCalendarAlert({ show: true, msg: "Error de conexión.", type: "danger" });
         }
+        setPendingDeleteSlotId(null);
     }
 
     const handleDayClick = (dayNumber) => {
@@ -318,7 +316,6 @@ export const Calendar = () => {
                     <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content border-0 rounded-4 shadow">
                             <div className="modal-header border-0 d-flex gap-4 align-items-center position-relative">
-                                {/* Título Centrado */}
                                 <h5 className="modal-title fw-bold">
                                     Appointments for {currentMonthName} {selectedDayNumber}
                                 </h5>
@@ -340,13 +337,13 @@ export const Calendar = () => {
                                 {selectedDayBlockedSlots.length > 0 && (
                                     <div className="mb-4">
                                         <h6 className="fw-bold text-danger mb-3">
-                                            <i className="bi bi-lock-fill me-2"></i>Slots bloqueados
+                                            <i className="bi bi-lock-fill me-2"></i>Fechas bloqueadas
                                         </h6>
                                         {selectedDayBlockedSlots.map(slot => (
                                             <div key={slot.id} className="d-flex justify-content-between align-items-center py-3 px-3 border border-danger rounded-3 mb-2 bg-light shadow-sm">
                                                 <div>
                                                     <p className="mb-1 fw-bold text-danger extra-small">
-                                                        {new Date(slot.start_date_time).toLocaleDateString()} - {new Date(slot.end_date_time).toLocaleDateString()}
+                                                        Desde {new Date(slot.start_date_time).toLocaleDateString('es-AR')} hasta {new Date(slot.end_date_time).toLocaleDateString('es-AR')}
                                                     </p>
                                                     <p className="mb-0 text-muted extra-small">{slot.reason}</p>
                                                 </div>
@@ -363,7 +360,12 @@ export const Calendar = () => {
                                                             setShowSlotModal(true);
                                                         }}>Editar</button>
                                                     <button className="btn btn-outline-danger btn-sm rounded-3"
-                                                        onClick={() => handleDeleteSlot(slot.id)}>Eliminar</button>
+                                                        onClick={() => {
+                                                            setPendingDeleteSlotId(slot.id);
+                                                            setShowDayModal(false);
+                                                            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('confirmDeleteSlotModal'));
+                                                            modal.show();
+                                                        }}>Eliminar</button>
                                                 </div>
                                             </div>
                                         ))}
@@ -438,12 +440,43 @@ export const Calendar = () => {
                             </div>
                             <div className="modal-footer border-0">
                                 <button className="btn btn-outline-secondary" onClick={() => { setShowSlotModal(false); setEditingSlot(null); }}>Cancelar</button>
-                                <button className="btn btn-danger" onClick={handleCreateSlot}>{editingSlot ? "Confirmar cambios" : "Confirmar bloqueo"}</button>
+                                <button className="btn btn-danger" onClick={() => {
+                                    setShowSlotModal(false);
+                                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('confirmSlotModal'));
+                                    modal.show();
+                                }}>{editingSlot ? "Confirmar cambios" : "Confirmar bloqueo"}</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+
+
+            {calendarAlert.show && (
+                <div className="position-fixed bottom-0 start-50 translate-middle-x mb-4" style={{ zIndex: 1060, minWidth: "350px" }}>
+                    <div className={`alert alert-${calendarAlert.type} alert-dismissible fade show shadow-lg rounded-3`} role="alert">
+                        <i className={`bi ${calendarAlert.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} me-2`}></i>
+                        {calendarAlert.msg}
+                        <button type="button" className="btn-close" onClick={() => setCalendarAlert({ ...calendarAlert, show: false })}></button>
+                    </div>
+                </div>
+            )}
+
+            <ConfirmModal
+                id="confirmSlotModal"
+                title={editingSlot ? "Confirmar edición" : "Confirmar bloqueo"}
+                message={editingSlot ? "¿Confirmar los cambios en las fechas bloqueadas?" : "¿Estás seguro de bloquear estas fechas?"}
+                warning={editingSlot ? null : "Las fechas seleccionadas quedarán bloqueadas para nuevos turnos."}
+                onConfirm={confirmSlotAction}
+            />
+
+            <ConfirmModal
+                id="confirmDeleteSlotModal"
+                title="Eliminar bloqueo"
+                message="¿Estás seguro de eliminar este bloqueo?"
+                warning="Se desbloquearán todas las fechas del rango."
+                onConfirm={confirmDeleteSlot}
+            />
 
         </div>
     );
