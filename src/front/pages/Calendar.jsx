@@ -317,9 +317,24 @@ export const Calendar = () => {
                 <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
                     <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content border-0 rounded-4 shadow">
-                            <div className="modal-header border-0">
-                                <h5 className="modal-title fw-bold">Appointments for {currentMonthName} {selectedDayNumber}</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowDayModal(false)}></button>
+                            <div className="modal-header border-0 d-flex gap-4 align-items-center position-relative">
+                                {/* Título Centrado */}
+                                <h5 className="modal-title fw-bold">
+                                    Appointments for {currentMonthName} {selectedDayNumber}
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn btn-dark mx-5"
+                                    onClick={() => console.log("Abrir formulario de cita")}
+                                >
+                                    + New Appointment
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-close position-absolute end-0 top-1 m-3"
+                                    onClick={() => setShowDayModal(false)}
+                                    aria-label="Close"
+                                ></button>
                             </div>
                             <div className="modal-body p-4">
                                 {selectedDayBlockedSlots.length > 0 && (
