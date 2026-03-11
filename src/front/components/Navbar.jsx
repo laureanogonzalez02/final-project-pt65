@@ -7,6 +7,9 @@ export const Navbar = () => {
 	const location = useLocation();
 	const navigate = useNavigate()
 	const isCalendarView = location.pathname === "/calendar";
+	const currentPath = location.pathname === "/"
+		? "Dashboard"
+		: location.pathname.split("/")[1].charAt(0).toUpperCase() + location.pathname.split("/")[1].slice(1);
 
 	if (isCalendarView) {
 		return (
@@ -34,7 +37,7 @@ export const Navbar = () => {
 
 	return (
 		<nav className="navbar">
-			<h2 className="nav-title">Dashboard</h2>
+			<h2 className="nav-title">{currentPath}</h2>
 			<div className="nav-right">
 				<div className="search-box">
 					<i className="bi bi-search"></i>
