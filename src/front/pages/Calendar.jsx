@@ -17,12 +17,14 @@ export const Calendar = () => {
     const currentYear = viewDate.getFullYear();
 
     const [blockedSlots, setBlockedSlots] = useState([]);
-    const [showBlockModal, setShowBlockModal] = useState(false);
-    const [blockForm, setBlockForm] = useState({
+    const [showSlotModal, setShowSlotModal] = useState(false);
+    const [slotForm, setSlotForm] = useState({
         start_date_time: "",
         end_date_time: "",
         reason: ""
     });
+
+    const [editingSlot, setEditingSlot] = useState(null);
 
     const loadData = async () => {
         const token = localStorage.getItem("token");
@@ -64,6 +66,16 @@ export const Calendar = () => {
         return filteredAppos.filter(a => new Date(a.start_date_time).getDate() === selectedDayNumber);
     }, [filteredAppos, selectedDayNumber]);
 
+    const selectedDayBlockedSlots = useMemo(() => {
+        if (!selectedDayNumber) return [];
+        return blockedSlots.filter(slot => {
+            const slotStart = new Date(slot.start_date_time);
+            const slotEnd = new Date(slot.end_date_time);
+            const currentDay = new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDayNumber);
+            return currentDay >= slotStart && currentDay <= slotEnd;
+        });
+    }, [blockedSlots, selectedDayNumber]);
+
     const updateAppointmentStatus = async (appoId, newStatus) => {
         const token = localStorage.getItem("token");
         try {
@@ -86,27 +98,31 @@ export const Calendar = () => {
         }
     };
 
-    const handleCreateBlock = async () => {
-        const confirmed = window.confirm("¿Estás seguro de bloquear este slot?");
+    const handleCreateSlot = async () => {
+        const isEditing = editingSlot !== null;
+        const confirmed = window.confirm(isEditing ? "¿Confirmar los cambios en el slot?" : "¿Estás seguro de bloquear este slot?");
         if (!confirmed) return;
 
         const token = localStorage.getItem("token");
+        const url = isEditing ? `${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots/${editingSlot.id}` : `${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots`;
+        const method = isEditing ? "PUT" : "POST";
         try {
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots`, {
-                method: "POST",
+            const resp = await fetch(url, {
+                method: method,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(blockForm)
+                body: JSON.stringify(slotForm)
             });
             if (resp.ok) {
-                setShowBlockModal(false);
-                setBlockForm({
+                setShowSlotModal(false);
+                setSlotForm({
                     start_date_time: "",
                     end_date_time: "",
                     reason: ""
                 });
+                setEditingSlot(null);
                 await loadData();
             } else {
                 const error = await resp.json();
@@ -114,6 +130,30 @@ export const Calendar = () => {
             }
         } catch (err) {
             console.error("Error al crear el bloqueo:", err);
+        }
+    }
+
+    const handleDeleteSlot = async (slotId) => {
+        const confirmed = window.confirm("¿Estás seguro de eliminar este slot?");
+        if (!confirmed) return;
+
+        const token = localStorage.getItem("token");
+        try {
+            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/blocked-slots/${slotId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            if (resp.ok) {
+                await loadData();
+                alert("Slot eliminado con éxito.");
+            } else {
+                const error = await resp.json();
+                alert(error.msg || "Error al eliminar el slot.");
+            }
+        } catch (err) {
+            console.error("Error al eliminar el slot:", err);
         }
     }
 
@@ -238,7 +278,7 @@ export const Calendar = () => {
                             <div className="d-flex justify-content-between align-items-center mb-4">
                                 <h6 className="fw-bold m-0 text-secondary">Future Availability Forecast</h6>
                                 <button className="btn btn-sm btn-dark px-3 rounded-pill">Auto-Match</button>
-                                <button className="btn btn-sm btn-danger px-3 rounded-pill" onClick={() => setShowBlockModal(true)}>Bloquear fechas</button>
+                                <button className="btn btn-sm btn-danger px-3 rounded-pill" onClick={() => setShowSlotModal(true)}>Bloquear fechas</button>
                             </div>
                             <div className="d-flex align-items-center gap-3 mb-4 bg-white border rounded-3 p-2 shadow-sm w-fit-content" style={{ width: "fit-content" }}>
                                 <button onClick={handlePrevMonth} className="btn btn-sm btn-link text-dark p-0">
@@ -282,6 +322,40 @@ export const Calendar = () => {
                                 <button type="button" className="btn-close" onClick={() => setShowDayModal(false)}></button>
                             </div>
                             <div className="modal-body p-4">
+                                {selectedDayBlockedSlots.length > 0 && (
+                                    <div className="mb-4">
+                                        <h6 className="fw-bold text-danger mb-3">
+                                            <i className="bi bi-lock-fill me-2"></i>Slots bloqueados
+                                        </h6>
+                                        {selectedDayBlockedSlots.map(slot => (
+                                            <div key={slot.id} className="d-flex justify-content-between align-items-center py-3 px-3 border border-danger rounded-3 mb-2 bg-light shadow-sm">
+                                                <div>
+                                                    <p className="mb-1 fw-bold text-danger extra-small">
+                                                        {new Date(slot.start_date_time).toLocaleDateString()} - {new Date(slot.end_date_time).toLocaleDateString()}
+                                                    </p>
+                                                    <p className="mb-0 text-muted extra-small">{slot.reason}</p>
+                                                </div>
+                                                <div className="d-flex gap-2">
+                                                    <button className="btn btn-outline-warning btn-sm rounded-3"
+                                                        onClick={() => {
+                                                            setEditingSlot(slot);
+                                                            setSlotForm({
+                                                                start_date_time: slot.start_date_time,
+                                                                end_date_time: slot.end_date_time,
+                                                                reason: slot.reason
+                                                            });
+                                                            setShowDayModal(false);
+                                                            setShowSlotModal(true);
+                                                        }}>Editar</button>
+                                                    <button className="btn btn-outline-danger btn-sm rounded-3"
+                                                        onClick={() => handleDeleteSlot(slot.id)}>Eliminar</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <hr />
+                                    </div>
+                                )}
+
                                 {selectedDayAppointments.length > 0 ? (
                                     <div className="list-group list-group-flush">
                                         {selectedDayAppointments.map(appo => (
@@ -319,37 +393,37 @@ export const Calendar = () => {
                 </div>
             )}
 
-            {showBlockModal && (
+            {showSlotModal && (
                 <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content border-0 rounded-4 shadow">
                             <div className="modal-header border-0">
-                                <h5 className="modal-title fw-bold">Bloquear fechas</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowBlockModal(false)}></button>
+                                <h5 className="modal-title fw-bold">{editingSlot ? "Editar Fechas" : "Bloquear Fechas"}</h5>
+                                <button type="button" className="btn-close" onClick={() => { setShowSlotModal(false); setEditingSlot(null); }}></button>
                             </div>
                             <div className="modal-body p-4">
                                 <div className="mb-3">
                                     <label className="form-label fw-semibold">Fecha de inicio</label>
                                     <input type="date" className="form-control"
-                                        value={blockForm.start_date_time.split('T')[0]}
-                                        onChange={e => setBlockForm({ ...blockForm, start_date_time: e.target.value + "T00:00:00" })} />
+                                        value={slotForm.start_date_time.split('T')[0]}
+                                        onChange={e => setSlotForm({ ...slotForm, start_date_time: e.target.value + "T00:00:00" })} />
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label fw-semibold">Fecha de fin</label>
                                     <input type="date" className="form-control"
-                                        value={blockForm.end_date_time.split('T')[0]}
-                                        onChange={e => setBlockForm({ ...blockForm, end_date_time: e.target.value + "T23:59:59" })} />
+                                        value={slotForm.end_date_time.split('T')[0]}
+                                        onChange={e => setSlotForm({ ...slotForm, end_date_time: e.target.value + "T23:59:59" })} />
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label fw-semibold">Motivo</label>
                                     <input type="text" className="form-control" placeholder="Ej: Mantenimiento, Feriado..."
-                                        value={blockForm.reason}
-                                        onChange={e => setBlockForm({ ...blockForm, reason: e.target.value })} />
+                                        value={slotForm.reason}
+                                        onChange={e => setSlotForm({ ...slotForm, reason: e.target.value })} />
                                 </div>
                             </div>
                             <div className="modal-footer border-0">
-                                <button className="btn btn-outline-secondary" onClick={() => setShowBlockModal(false)}>Cancelar</button>
-                                <button className="btn btn-danger" onClick={handleCreateBlock}>Confirmar bloqueo</button>
+                                <button className="btn btn-outline-secondary" onClick={() => { setShowSlotModal(false); setEditingSlot(null); }}>Cancelar</button>
+                                <button className="btn btn-danger" onClick={handleCreateSlot}>{editingSlot ? "Confirmar cambios" : "Confirmar bloqueo"}</button>
                             </div>
                         </div>
                     </div>

@@ -60,13 +60,6 @@
 .day-blocked {
   background-color: #dc3545 !important;
   color: white !important;
-  cursor: not-allowed;
-}
-
-.day-blocked:hover {
-  transform: none !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
 }
 
 .day-partial {

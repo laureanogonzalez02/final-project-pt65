@@ -473,3 +473,50 @@ def create_blocked_slot():
     db.session.add(new_block)
     db.session.commit()
     return jsonify(new_block.serialize()), 201
+
+@api.route('/blocked-slots/<int:slot_id>', methods=['PUT'])
+@jwt_required()
+def update_blocked_slot(slot_id):
+    slot = db.session.get(BlockedSlot, slot_id)
+
+    if not slot:
+        return jsonify({"msg": "Slot no encontrado"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"msg": "Missing data"}), 400
+    
+    new_start = data.get("start_date_time")
+    new_end = data.get("end_date_time")
+    new_reason = data.get("reason")
+
+    if new_start and new_end:
+        new_start_date_time = datetime.fromisoformat(new_start)
+        new_end_date_time = datetime.fromisoformat(new_end)
+        conflicting = Appointment.query.filter(
+            Appointment.start_date_time < new_end_date_time,
+            Appointment.end_date_time > new_start_date_time
+        ).first()
+
+        if conflicting:
+            return jsonify({"msg": "Hay turnos programados en este horario"}), 409
+
+        slot.start_date_time = new_start_date_time
+        slot.end_date_time = new_end_date_time
+
+    if new_reason:
+        slot.reason = new_reason
+
+
+    db.session.commit()
+    return jsonify(slot.serialize()), 200
+
+@api.route('/blocked-slots/<int:slot_id>', methods=['DELETE'])
+@jwt_required()
+def delete_blocked_slot(slot_id):
+    slot = db.session.get(BlockedSlot, slot_id)
+    if not slot:
+        return jsonify({"msg": "Slot no encontrado"}), 404
+    db.session.delete(slot)
+    db.session.commit()
+    return jsonify({"msg": "Slot eliminado exitosamente"}), 200
