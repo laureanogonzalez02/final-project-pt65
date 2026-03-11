@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User, Appointment, BlockedSlot
+from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure
 from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token, get_month_date_range
 from flask_mail import Message
 from flask_cors import CORS
@@ -333,6 +333,17 @@ def reset_password():
         "msg": "Password has been reset successfully"
     }), 200
 
+@api.route('/specialties', methods=['GET'])
+@jwt_required()
+def specialties():
+    specialties = Specialty.query.all()
+    return jsonify([specialty.serialize() for specialty in specialties]), 200
+
+@api.route('/procedures', methods=['GET'])
+@jwt_required()
+def procedures():
+    procedures = Procedure.query.all()
+    return jsonify([procedure.serialize() for procedure in procedures]), 200
 
 @api.route('/create-appointments', methods=['POST'])
 @jwt_required()
