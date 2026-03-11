@@ -13,13 +13,13 @@ const useMedicalData = () => {
                 const url = import.meta.env.VITE_BACKEND_URL;
 
                 const [specRes, procRes] = await Promise.all([
-                    fetch(import.meta.env.VITE_BACKEND_URL + "/api/specialties", {
+                    fetch(url + "/api/specialties", {
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${store.token}`,
                         }
                     }),
-                    fetch(import.meta.env.VITE_BACKEND_URL + "/api/procedures", {
+                    fetch(url + "/api/procedures", {
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${store.token}`,
@@ -32,7 +32,7 @@ const useMedicalData = () => {
                     setProcedures(await procRes.json());
                 }
             } catch (error) {
-                console.error("Error cargando datos médicos:", error);
+                console.error("Error loading medical data:", error);
             } finally {
                 setLoadingMedicalData(false);
             }
