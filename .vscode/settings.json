@@ -15,9 +15,12 @@
       "port": 5432,
       "driver": "PostgreSQL",
       "database": "example",
-      "username": "gitpod", 
+      "username": "gitpod",
       "name": "Postgres_Local"
     }
-  ]
+  ],
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 700,
+  "editor.minimap.enabled": false,
+  "postman.settings.dotenv-detection-notification-visibility": false
 }
-  

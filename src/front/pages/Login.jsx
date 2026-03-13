@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import useGlobalContext from "../hooks/useGlobalReducer";
 
 
@@ -80,6 +80,11 @@ const Login = () => {
                                 <button type="submit" className="btn btn-signup w-100 py-2" disabled={loading}>
                                     {loading ? "Ingresando..." : "Ingresar"}
                                 </button>
+                                <p className="text-center text-muted mt-3">
+                                    <Link to="/forgot-password" className="text-muted text-decoration-none">
+                                        ¿Desea recuperar su contraseña?
+                                    </Link>
+                                </p>
                             </form>
                         </div>
                     </div>

@@ -48,3 +48,123 @@
   font-weight: 500;
   cursor: pointer;
 }
+
+.navbar-calendar {
+  height: 70px;
+  position: fixed;
+  width: calc(100% - 260px); 
+  background-color: #cf9999; 
+  border-bottom: 1px solid #616161;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  z-index: 1000; 
+}
+
+.nav-title-calendar {
+  font-size: 1.1rem; 
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.nav-right-calendar {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.search-box-calendar {
+  background: #f1f3f4;
+  padding: 6px 18px;
+  border-radius: 50px; 
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 320px;
+  border: 1px solid #e9ecef;
+}
+
+.search-box-calendar input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.bell-dot {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background-color: #fa5252; 
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.btn-appointment-calendar {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 8px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-appointment-calendar i {
+  font-size: 1rem;
+}
+
+.search-box-pill {
+    background-color: #f0f0f0; 
+    border: 1px solid #e9ecef;
+    border-radius: 50px;       
+    width: 350px;              
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.search-box-pill:focus-within {
+    background-color: #ffffff;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+}
+
+.search-box-pill i {
+    color: #adb5bd; 
+    display: flex;
+    align-items: center;
+}
+
+.search-input-clean {
+    border: none;
+    background: transparent;
+    outline: none;       
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 6px 0;    
+    color: #212529;
+}
+
+.search-input-clean::placeholder {
+    color: #adb5bd;
+    font-size: 0.85rem;
+}

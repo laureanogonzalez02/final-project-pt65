@@ -1,6 +1,8 @@
 from flask import jsonify, url_for, current_app
 from datetime import datetime, timezone, timedelta
 import jwt
+import calendar
+from datetime import datetime
 
 class APIException(Exception):
     status_code = 400
@@ -74,3 +76,18 @@ def verify_reset_token(token):
         return None
     except jwt.InvalidTokenError:
         return None
+
+def get_month_date_range(month = None, year = None):
+
+    now = datetime.now()
+
+    if not month:
+        month = now.month
+    if not year:
+        year = now.year
+    
+    start_of_month = datetime(year, month, 1)
+    last_day_of_month = calendar.monthrange(year, month)[1]
+    end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
+    
+    return start_of_month, end_of_month

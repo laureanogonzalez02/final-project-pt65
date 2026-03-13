@@ -1,4 +1,3 @@
-import React from "react";
 import { NavLink } from "react-router-dom";
 import { useState, useRef, useEffect, useContext } from "react";
 import { StoreContext } from "../hooks/useGlobalReducer";
@@ -91,24 +90,26 @@ export const Sidebar = () => {
         <>
             <aside className="sidebar">
                 <div className="sidebar-header">
-                    <div className="logo-icon">DS</div>
-                    <span className="logo-text">DocSpot AI</span>
+                    <div className="logo-icon">
+                        <i className="bi bi-calendar-check" style={{ fontSize: "0.9rem" }}></i>
+                    </div>
+                    <span className="logo-text">ProceTurn</span>
                 </div>
                 <nav className="sidebar-nav">
                     <NavLink to="/" className="sidebar-nav-item">
-                        <h1> Dashboard </h1>
+                        <h1> Tablero </h1>
                     </NavLink>
                     <NavLink to="/calendar" className="sidebar-nav-item">
-                        <h1> Calendar </h1>
+                        <h1> Calendario </h1>
                     </NavLink>
                     <NavLink to="/patients" className="sidebar-nav-item">
-                        <h1> Patients </h1>
+                        <h1> Pacientes </h1>
                     </NavLink>
                     <NavLink to="/messages" className="sidebar-nav-item">
-                        <h1> Messages </h1>
+                        <h1> Mensajes </h1>
                     </NavLink>
                     <NavLink to="/staff" className="sidebar-nav-item">
-                        <h1> Staff </h1>
+                        <h1> Personal </h1>
                     </NavLink>
                 </nav>
                 <div className="profile-container">
@@ -116,7 +117,7 @@ export const Sidebar = () => {
                         <div className="dropdown-menu-up" ref={dropdownMenuRef}>
                             <ul>
                                 <li> {svgProfile} Ver Perfil</li>
-                                <li> {svgSettings} Configuración</li>
+                                <li> {svgSettings} Opciones</li>
                                 <li className="logout" data-bs-target="#confirmEditModalSession" data-bs-toggle="modal">
                                     {svgLogout} Cerrar Sesión
                                 </li>

@@ -1,0 +1,173 @@
+.bg-light {
+  background-color: #fcfcfc !important;
+}
+
+.rounded-4 {
+  border-radius: 16px !important;
+}
+
+.card {
+  border: 1px solid #f0f0f0 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.calendar-main-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f1f1;
+  margin-bottom: 15px;
+}
+
+.calendar-weekdays div {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.calendar-day {
+  min-height: 105px;
+  border: 2px solid transparent !important;
+  border-radius: 12px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+}
+
+.calendar-day:hover {
+  transform: translateY(-4px);
+  border-color: #000000 !important;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.day-available {
+  background-color: #198754 !important;
+  color: white !important;
+}
+
+.day-blocked {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+.day-partial {
+  background-color: #d1e7dd !important;
+  color: #0f5132 !important;
+}
+
+.day-full {
+  background-color: #e9ecef !important;
+  color: #495057 !important;
+}
+
+.appo-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.low-availability .dot,
+.medium-availability .dot {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.status-confirmed {
+  background-color: #2ecc71;
+}
+.status-scheduled {
+  background-color: #f1c40f;
+}
+.status-cancelled {
+  background-color: #e74c3c;
+}
+
+.section-title {
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.section-title.urgent {
+  background-color: #fff5f5 !important;
+  color: #c92a2a !important;
+}
+
+.section-title.routine {
+  background-color: #ebfbee !important;
+  color: #2b8a3e !important;
+}
+
+.avatar-circle {
+  width: 34px;
+  height: 34px;
+  background-color: #f1f3f5;
+  border-radius: 50%;
+  border: 1px solid #e9ecef;
+}
+
+.btn-dark {
+  background-color: #000 !important;
+  border: none;
+  font-weight: 600;
+}
+
+.legend-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.legend-box.high {
+  background-color: #198754;
+}
+.legend-box.medium {
+  background-color: #d1e7dd;
+  border: 1px solid #198754;
+}
+.legend-box.low {
+  background-color: #f3f4f6;
+}
+
+.appo-count-badge {
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  color: inherit;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.x-small {
+  font-size: 0.8rem;
+}
+.extra-small {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.month-nav-container {
+  background: #ffffff;
+  border: 1px solid #eee;
+  padding: 5px 15px;
+  border-radius: 10px;
+}

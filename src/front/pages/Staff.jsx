@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { StoreContext } from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { NavLink } from "react-router-dom";
@@ -52,9 +52,7 @@ export const Staff = () => {
                     <h2 className="fw-bold mb-1" style={{ color: "#1e293b" }}>Personal Administrativo</h2>
                     <p className="text-muted">Gestiona tu equipo</p>
                 </div>
-                <NavLink to="/signup" className="btn btn-primary px-4 py-2 fw-semibold shadow-sm" style={{ backgroundColor: "#2ECC71", border: "none" }}>
-                    + Agregar Personal
-                </NavLink>
+
             </div>
 
             <div className="row g-3 mb-5">
@@ -73,8 +71,12 @@ export const Staff = () => {
                 ))}
             </div>
 
-            <h5 className="fw-bold mb-4">Equipo Administrativo ({store.staffList.length})</h5>
-
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h5 className="fw-bold mb-4">Equipo Administrativo ({store.staffList.length})</h5>
+                <NavLink to="/signup" className="btn btn-primary px-4 py-2 fw-semibold shadow-sm" style={{ backgroundColor: "#2ECC71", border: "none" }}>
+                    + Agregar Personal
+                </NavLink>
+            </div>
             <div className="row g-4">
                 {store.staffList.length > 0 ? (
                     store.staffList.map((user) => (
@@ -85,7 +87,7 @@ export const Staff = () => {
                                     <div className="d-flex gap-3">
                                         <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-primary"
                                             style={{ width: "60px", height: "60px", backgroundColor: "#e0e7ff", fontSize: "1.2rem" }}>
-                                            {user.full_name ? user.full_name.split(" ").map(user => user[0]).join("") : "Unknown"}
+                                            {user.full_name ? user.full_name.split(" ").map(user => user[0]).join("") : "Desc."}
                                         </div>
                                         <div>
                                             <div className="d-flex align-items-center gap-2">

@@ -1,14 +1,11 @@
-"""
-This module takes care of starting the API Server, Loading the DB and Adding the endpoints
-"""
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User
-from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token
+from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure, ProcedureAvailability
+from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token, get_month_date_range
 from flask_mail import Message
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import select
+from sqlalchemy import select, extract, or_
 from datetime import datetime, timezone, timedelta
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
@@ -145,7 +142,6 @@ def update_user(user_id):
 
     current_user = get_jwt_identity()
     admin = db.session.get(User, current_user)
-
     if not admin or admin.role != "admin":
         return jsonify({"msg": "Unauthorized"}), 403
 
@@ -204,10 +200,12 @@ def update_user(user_id):
         if old_active is True and user.is_active is False:
             deactivated_now = True
 
+
     if "role" in data and data["role"] != user.role:
         old_role = user.role
         user.role = data["role"]
         changes.append(change_register("role", old_role, user.role))
+
 
     if not changes:
         return jsonify({"msg": "No changes detected"}), 400
@@ -252,7 +250,12 @@ def update_user(user_id):
 
 
 @api.route('/users/<int:user_id>', methods=['DELETE'])
+@jwt_required()
 def delete_user(user_id):
+    current_user = get_jwt_identity()
+    admin = db.session.get(User, current_user)
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Unauthorized"}), 403
 
     user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
 
@@ -282,7 +285,7 @@ def forgot_password():
     if user:
         token = generate_reset_token(user.id)
 
-        reset_link = f"http://localhost:3000/reset-password?token={token}"
+        reset_link = f"http://localhost:5173/reset-password/{token}"
 
         msg = Message(
             subject="Password Reset Request",
@@ -290,16 +293,15 @@ def forgot_password():
         )
 
         msg.body = f"""
-        Para recuperar tu contraseña hacé click en el siguiente enlace:
+Para recuperar tu contraseña hacé click en el siguiente enlace:
 
-        {reset_link}
+{reset_link}
 
-        Este enlace expira en 15 minutos.
-        """
+Este enlace expira en 15 minutos.
+"""
 
         current_app.extensions['mail'].send(msg)
 
-    # 🔐 Seguridad: no revelar si el email existe
     return jsonify({
         "msg": "If that email exists, a recovery link has been sent."
     }), 200
@@ -310,7 +312,7 @@ def reset_password():
     data = request.get_json()
 
     token = data.get("token")
-    new_password = data.get("password")
+    new_password = data.get("new_password")
 
     if not token or not new_password:
         return jsonify({
@@ -324,7 +326,7 @@ def reset_password():
             "msg": "Invalid or expired token"
         }), 400
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     if not user:
         return jsonify({"msg": "User not found"}), 404
@@ -335,3 +337,278 @@ def reset_password():
     return jsonify({
         "msg": "Password has been reset successfully"
     }), 200
+
+@api.route('/specialties', methods=['GET'])
+@jwt_required()
+def specialties():
+    specialties = Specialty.query.all()
+    return jsonify([specialty.serialize() for specialty in specialties]), 200
+
+@api.route('/procedures', methods=['GET'])
+@jwt_required()
+def procedures():
+    procedures = Procedure.query.all()
+    return jsonify([procedure.serialize() for procedure in procedures]), 200
+
+@api.route('/create-appointments', methods=['POST'])
+@jwt_required()
+def create_appointment():
+    body = request.get_json()
+        
+    if 'dni' not in body or not body['dni']:
+        return jsonify({"msg": "DNI is required to identify the patient"}), 400
+    
+    patient = Patient.query.filter_by(dni=body['dni']).first()
+
+    if not patient:
+        return jsonify({"msg": "No patient found registered with this DNI"}), 404
+
+    required_fields = [
+        "start_date_time", "end_date_time", 
+        "user_id", "specialty_id", "procedure_id", "dni"
+    ]
+    for field in required_fields:
+        if field not in body or not body[field]:
+            return jsonify({"msg": f"The field '{field}' is required"}), 400
+
+    already_booked = Appointment.query.filter_by(
+        patient_id=patient.id,
+        procedure_id=body['procedure_id'],
+        start_date_time=body['start_date_time'],
+    ).first()
+
+    if already_booked:
+        return jsonify({
+            "msg": "Este paciente ya tiene una cita agendada para este procedimiento en este horario."
+        }), 400
+
+
+    try:
+        start_dt = datetime.strptime(body['start_date_time'], "%Y-%m-%d %H:%M:%S")
+        end_dt = datetime.strptime(body['end_date_time'], "%Y-%m-%d %H:%M:%S")
+
+        availability = ProcedureAvailability.query.filter_by(
+            procedure_id=body['procedure_id'],
+            day_of_week=start_dt.weekday(),
+            start_time=start_dt.time()
+        ).first()
+
+        if not availability:
+            return jsonify({"msg": "This time slot is not available for this procedure"}), 400
+        
+        current_appointments = Appointment.query.filter_by(
+            start_date_time=start_dt,
+            procedure_id=body['procedure_id']
+        ).count()
+
+        if current_appointments >= availability.capacity:
+            return jsonify({"msg": f"Fully booked. All {availability.capacity} machines are busy at this time."}), 400
+
+        new_appointment = Appointment(
+            start_date_time=start_dt,
+            end_date_time=end_dt,
+            patient_id=patient.id,
+            user_id=body['user_id'],
+            specialty_id=body['specialty_id'],
+            procedure_id=body['procedure_id'],
+            notes=body.get('notes', None), 
+            status="scheduled",
+            confirmed=False
+        )
+
+        db.session.add(new_appointment)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Appointment created successfully",
+            "appointment": new_appointment.serialize()
+        }), 201
+
+    except ValueError as e:
+        return jsonify({"msg": "Invalid date format", "error": str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Internal server error", "error": str(e)}), 500
+    
+@api.route('/appointments/<int:appo_id>', methods=['PUT']) 
+@jwt_required()
+def update_appointment_status(appo_id):
+    body = request.get_json()
+    new_status = body.get("status") 
+
+    appointment = db.session.get(Appointment, appo_id)
+    if not appointment:
+        return jsonify({"msg": "Turno no encontrado"}), 404
+
+    appointment.status = new_status
+    if new_status == "confirmed":
+        appointment.confirmed = True
+
+    if new_status == "cancelled":
+        appointment.cancellation_date = datetime.now(timezone.utc)
+        appointment.cancellation_reason = body.get("cancellation_reason", None)
+
+    db.session.commit()
+    return jsonify({"msg": f"Turno actualizado a {new_status}"}), 200
+
+@api.route('/appointments', methods=['GET'])
+@jwt_required()
+def get_appointments():
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    start_date, end_date = get_month_date_range(month, year)
+
+    stmt = select(Appointment).where(
+        or_(
+            (Appointment.start_date_time >= start_date) & (Appointment.start_date_time <= end_date),
+            (Appointment.end_date_time >= start_date) & (Appointment.end_date_time <= end_date)
+        )
+    )
+
+    result = db.session.execute(stmt)
+    appointments = result.scalars().all()
+
+    return jsonify([appo.serialize() for appo in appointments]), 200
+
+@api.route('/blocked-slots', methods=['GET'])
+@jwt_required()
+def get_blocked_slots():
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    start_date, end_date = get_month_date_range(month, year)
+
+    stmt = select(BlockedSlot).where(
+        or_(
+            (BlockedSlot.start_date_time >= start_date) & (BlockedSlot.start_date_time <= end_date),
+            (BlockedSlot.end_date_time >= start_date) & (BlockedSlot.end_date_time <= end_date)
+        )
+    )
+    result = db.session.execute(stmt)
+    blocked_slots = result.scalars().all()
+    return jsonify([slot.serialize() for slot in blocked_slots]), 200
+
+@api.route('/blocked-slots', methods=['POST'])
+@jwt_required()
+def create_blocked_slot():
+    data = request.get_json()
+    start = data.get('start_date_time')
+    end = data.get('end_date_time')
+    reason = data.get('reason')
+
+    if not start or not end:
+        return jsonify({"msg": "start_date_time y end_date_time son requeridos"}), 400
+
+    if not reason:
+        return jsonify({"msg": "reason es requerido"}), 400
+
+    start_date_time = datetime.fromisoformat(start)
+    end_date_time = datetime.fromisoformat(end)
+    conflicting = Appointment.query.filter(
+        Appointment.start_date_time < end_date_time,
+        Appointment.end_date_time > start_date_time
+    ).first()
+
+    if conflicting:
+        return jsonify({"msg": "Hay turnos programados en este horario"}), 409
+
+    new_block = BlockedSlot(
+        start_date_time=start_date_time,
+        end_date_time=end_date_time,
+        reason=reason,
+    )
+
+    db.session.add(new_block)
+    db.session.commit()
+    return jsonify(new_block.serialize()), 201
+
+@api.route('/blocked-slots/<int:slot_id>', methods=['PUT'])
+@jwt_required()
+def update_blocked_slot(slot_id):
+    slot = db.session.get(BlockedSlot, slot_id)
+
+    if not slot:
+        return jsonify({"msg": "Slot no encontrado"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"msg": "Missing data"}), 400
+    
+    new_start = data.get("start_date_time")
+    new_end = data.get("end_date_time")
+    new_reason = data.get("reason")
+
+    if new_start and new_end:
+        new_start_date_time = datetime.fromisoformat(new_start)
+        new_end_date_time = datetime.fromisoformat(new_end)
+        conflicting = Appointment.query.filter(
+            Appointment.start_date_time < new_end_date_time,
+            Appointment.end_date_time > new_start_date_time
+        ).first()
+
+        if conflicting:
+            return jsonify({"msg": "Hay turnos programados en este horario"}), 409
+
+        slot.start_date_time = new_start_date_time
+        slot.end_date_time = new_end_date_time
+
+    if new_reason:
+        slot.reason = new_reason
+
+
+    db.session.commit()
+    return jsonify(slot.serialize()), 200
+
+@api.route('/blocked-slots/<int:slot_id>', methods=['DELETE'])
+@jwt_required()
+def delete_blocked_slot(slot_id):
+    slot = db.session.get(BlockedSlot, slot_id)
+    if not slot:
+        return jsonify({"msg": "Slot no encontrado"}), 404
+    db.session.delete(slot)
+    db.session.commit()
+    return jsonify({"msg": "Slot eliminado exitosamente"}), 200
+
+
+@api.route('/procedure-capacity', methods=['POST'])
+@jwt_required()
+def get_procedure_capacity():
+    body = request.get_json()
+    proc_id = body.get("procId")
+    selected_date_str = body.get("date") 
+
+    if not proc_id or not selected_date_str:
+        return jsonify({"msg": "Missing procId or date"}), 400
+
+    try:
+        selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+        day_of_week = selected_date.weekday() 
+
+        slots = ProcedureAvailability.query.filter_by(
+            procedure_id=proc_id, 
+            day_of_week=day_of_week
+        ).all()
+
+        results = []
+        for slot in slots:
+            start_dt = datetime.combine(selected_date, slot.start_time)
+
+            booked_count = Appointment.query.filter(
+                Appointment.procedure_id == proc_id,
+                Appointment.start_date_time == start_dt,
+                Appointment.status != "cancelled"
+            ).count()
+
+            results.append({
+                "slot_id": slot.id,
+                "start_time": slot.start_time.strftime("%H:%M:%S"),
+                "end_time": slot.end_time.strftime("%H:%M:%S"),
+                "available_slots": slot.capacity - booked_count,
+                "is_full": booked_count >= slot.capacity
+            })
+
+        return jsonify(results), 200
+
+    except Exception as e:
+        return jsonify({"msg": "Error consultando capacidad", "error": str(e)}), 500

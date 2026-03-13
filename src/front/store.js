@@ -5,6 +5,7 @@ export const initialStore = {
   todos: [],
   token: localStorage.getItem("token") || null,
   user: JSON.parse(localStorage.getItem("user")) || null,
+  appointments: [],
 };
 
 export default function storeReducer(store, action = {}) {
@@ -46,6 +47,11 @@ export default function storeReducer(store, action = {}) {
         todos: store.todos.map((todo) =>
           todo.id === id ? { ...todo, background: color } : todo,
         ),
+      };
+    case "set_appointments":
+      return{
+        ...store,
+        appointments: action.payload
       };
 
     default:

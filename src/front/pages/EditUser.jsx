@@ -66,9 +66,9 @@ export const EditUser = () => {
                 if (data.audit) {
                     console.log("%c--- REPORTE DE AUDITORÍA ---", "color: #00d1b2; font-weight: bold;");
                     console.log(`Realizado por (Admin): ${data.audit.modified_by.name}`);
-                    console.log(`Usuario modificado: ${data.audit.user_modified.name}`);
-                    console.log(`Fecha y hora: ${new Date(data.audit.date_time).toLocaleString()}`);
-                    console.table(data.audit.changes); 
+                    console.log(`Usuario modificado: ${data.audit.target_user.name}`);
+                    console.log(`Fecha y hora: ${new Date(data.audit.timestamp).toLocaleString()}`);
+                    console.table(data.audit.details); 
                     console.log("%c---------------------------", "color: #00d1b2; font-weight: bold;");
                 }
             

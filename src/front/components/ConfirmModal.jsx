@@ -17,8 +17,8 @@ const ConfirmModal = ({ id, title, message, warning, onConfirm }) => {
                         )}
                     </div>
                     <div className="modal-footer border-0">
-                        <button type="button" className="btn btn-light fw-bold" data-bs-dismiss="modal">No, Cancelar</button>
-                        <button type="button" className="btn btn-dark fw-bold px-4" data-bs-dismiss="modal" onClick={onConfirm}>
+                        <button type="button" className="btn btn-danger fw-bold" data-bs-dismiss="modal">No, Cancelar</button>
+                        <button type="button" className="btn btn-success fw-bold px-4" data-bs-dismiss="modal" onClick={onConfirm}>
                             Sí, Confirmar
                         </button>
                     </div>
