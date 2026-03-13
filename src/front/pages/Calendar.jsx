@@ -15,7 +15,6 @@ export const Calendar = () => {
     const { procedures } = useMedicalData();
     const [selectedProcedure, setSelectedProcedure] = useState("");
 
-    const [showDayModal, setShowDayModal] = useState(false);
     const [selectedDayNumber, setSelectedDayNumber] = useState(null);
 
     const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -170,7 +169,6 @@ export const Calendar = () => {
 
     const handleDayClick = (dayNumber) => {
         setSelectedDayNumber(dayNumber);
-        setShowDayModal(true);
     };
 
     const handlePrevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
@@ -272,8 +270,8 @@ export const Calendar = () => {
                     </div>
                 </div>
 
-                <div className="row g-4">
-                    <div className={expandedPanel ? "col-lg-12" : "col-lg-4"}>
+                <div className={`row g-4 ${expandedPanel ? "flex-column" : ""}`}>
+                    <div className={expandedPanel ? "col-12" : "col-lg-4"}>
                         <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
                             {selectedDayNumber ? (
                                 <>
@@ -283,6 +281,11 @@ export const Calendar = () => {
                                             {selectedDayNumber} de {currentMonthName}
                                         </h6>
                                         <div className="d-flex gap-2">
+                                            <button
+                                                className="btn btn-sm btn-dark rounded-3 px-2"
+                                                onClick={() => navigate("/new-appointment")}>
+                                                + Nuevo turno
+                                            </button>
                                             <button
                                                 className="btn btn-sm btn-outline-secondary rounded-3"
                                                 title={expandedPanel ? "Reducir vista" : "Ampliar vista"}
@@ -352,7 +355,7 @@ export const Calendar = () => {
                             )}
                         </div>
                     </div>
-                    <div className={expandedPanel ? "d-none" : "col-lg-8"}>
+                    <div className={expandedPanel ? "col-12" : "col-lg-8"}>
                         <div className="card border-0 shadow-sm rounded-4 p-4">
                             <div className="d-flex justify-content-between align-items-center mb-4">
                                 <h6 className="fw-bold m-0 text-secondary">Pronóstico de Disponibilidad Próxima</h6>
@@ -392,116 +395,6 @@ export const Calendar = () => {
                     </div>
                 </div>
             </div>
-            {showDayModal && (
-                <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
-                    <div className="modal-dialog modal-lg modal-dialog-centered">
-                        <div className="modal-content border-0 rounded-4 shadow">
-                            <div className="modal-header border-0 d-flex gap-4 align-items-center position-relative">
-                                <h5 className="modal-title fw-bold">
-                                    Turnos para el {selectedDayNumber} de {currentMonthName}
-                                </h5>
-                                <button
-                                    type="button"
-                                    className="btn btn-dark mx-5"
-                                    onClick={() => {
-                                        const monthStr = String(viewDate.getMonth() + 1).padStart(2, '0');
-                                        const dayStr = String(selectedDayNumber).padStart(2, '0');
-                                        const dateString = `${currentYear}-${monthStr}-${dayStr}`;
-                                        navigate(`/new-appointment?date=${dateString}`);
-                                    }}
-                                >
-                                    + Nuevo turno
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn-close position-absolute end-0 top-1 m-3"
-                                    onClick={() => setShowDayModal(false)}
-                                    aria-label="Close"
-                                ></button>
-                            </div>
-                            <div className="modal-body p-4">
-                                {selectedDayBlockedSlots.length > 0 && (
-                                    <div className="mb-4">
-                                        <h6 className="fw-bold text-danger mb-3">
-                                            <i className="bi bi-lock-fill me-2"></i>Fechas bloqueadas
-                                        </h6>
-                                        {selectedDayBlockedSlots.map(slot => (
-                                            <div key={slot.id} className="d-flex justify-content-between align-items-center py-3 px-3 border border-danger rounded-3 mb-2 bg-light shadow-sm">
-                                                <div>
-                                                    <p className="mb-1 fw-bold text-danger extra-small">
-                                                        Desde {new Date(slot.start_date_time).toLocaleDateString('es-AR')} hasta {new Date(slot.end_date_time).toLocaleDateString('es-AR')}
-                                                    </p>
-                                                    <p className="mb-0 text-muted extra-small">{slot.reason}</p>
-                                                </div>
-                                                <div className="d-flex gap-2">
-                                                    <button className="btn btn-outline-warning btn-sm rounded-3"
-                                                        onClick={() => {
-                                                            setEditingSlot(slot);
-                                                            setSlotForm({
-                                                                start_date_time: slot.start_date_time,
-                                                                end_date_time: slot.end_date_time,
-                                                                reason: slot.reason
-                                                            });
-                                                            setShowDayModal(false);
-                                                            setShowSlotModal(true);
-                                                        }}>Editar</button>
-                                                    <button className="btn btn-outline-danger btn-sm rounded-3"
-                                                        onClick={() => {
-                                                            setPendingDeleteSlotId(slot.id);
-                                                            setShowDayModal(false);
-                                                            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('confirmDeleteSlotModal'));
-                                                            modal.show();
-                                                        }}>Eliminar</button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <hr />
-                                    </div>
-                                )}
-
-                                {selectedDayAppointments.length > 0 ? (
-                                    <div className="list-group list-group-flush">
-                                        {selectedDayAppointments.map(appo => (
-                                            <div key={appo.id} className="list-group-item d-flex justify-content-between align-items-center py-3 border-light rounded-3 mb-2 bg-light shadow-sm">
-                                                <div>
-                                                    <h6 className="mb-1 fw-bold">{appo.patient_name}</h6>
-                                                    <p className="mb-0 text-muted extra-small">
-                                                        <i className="bi bi-clock me-1"></i>
-                                                        {new Date(appo.start_date_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - <strong>{appo.procedure_name}</strong>
-                                                    </p>
-                                                    <span className={`badge mt-2 bg-${appo.status === 'confirmed' ? 'success' : appo.status === 'cancelled' ? 'danger' : 'warning'}`}>
-                                                        {appo.status === 'confirmed' ? 'CONFIRMADO' : appo.status === 'cancelled' ? 'CANCELADO' : appo.status.toUpperCase()}
-                                                    </span>
-                                                </div>
-                                                <div className="d-flex gap-2">
-                                                    {appo.status !== 'confirmed' && appo.status !== 'cancelled' && (
-                                                        <button className="btn btn-success btn-sm rounded-3" onClick={() => updateAppointmentStatus(appo.id, 'confirmed')}>Confirmar</button>
-                                                    )}
-                                                    {appo.status !== 'cancelled' && (
-                                                        <button
-                                                            className="btn btn-outline-danger btn-sm rounded-3"
-                                                            onClick={() => {
-                                                                setCancellingAppo(appo);
-                                                                setCancelReason("");
-                                                            }}>
-                                                            Cancelar
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-5">
-                                        <i className="bi bi-calendar-x display-4 text-muted"></i>
-                                        <p className="mt-3 text-muted">No hay turnos para los criterios seleccionados.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {showSlotModal && (
                 <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
