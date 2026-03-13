@@ -8,6 +8,8 @@ export const Calendar = () => {
     const { store, dispatch } = useContext(StoreContext);
     const [viewDate, setViewDate] = useState(new Date());
 
+    const [expandedPanel, setExpandedPanel] = useState(false);
+
     const { procedures } = useMedicalData();
     const [selectedProcedure, setSelectedProcedure] = useState("");
 
@@ -269,21 +271,86 @@ export const Calendar = () => {
                 </div>
 
                 <div className="row g-4">
-                    <div className="col-lg-4">
+                    <div className={expandedPanel ? "col-lg-12" : "col-lg-4"}>
                         <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-                            <h6 className="fw-bold mb-4 ms-1">Lista de Espera Activa</h6>
-                            <div className="mb-4">
-                                <p className="section-title urgent py-1 px-2 rounded mb-3">URGENTE (PRÓXIMAS 48H)</p>
-                                <PatientRow name="Elena Gomez" specialty="Cardiología" />
-                                <PatientRow name="Raj Patel" specialty="Dermatología" />
-                            </div>
-                            <div>
-                                <p className="section-title routine py-1 px-2 rounded mb-3">RUTINA (PRÓXIMAS 2 SEMANAS)</p>
-                                <PatientRow name="Adam Cooper" specialty="Dermatología" />
-                            </div>
+                            {selectedDayNumber ? (
+                                <>
+                                    <div className="d-flex justify-content-between align-items-center mb-4">
+                                        <h6 className="fw-bold m-0">
+                                            <i className="bi bi-calendar-day me-2 text-primary"></i>
+                                            {selectedDayNumber} de {currentMonthName}
+                                        </h6>
+                                        <div className="d-flex gap-2">
+                                            <button
+                                                className="btn btn-sm btn-outline-secondary rounded-3"
+                                                title={expandedPanel ? "Reducir vista" : "Ampliar vista"}
+                                                onClick={() => setExpandedPanel(!expandedPanel)}>
+                                                <i className={`bi ${expandedPanel ? "bi-arrows-angle-contract" : "bi-arrows-angle-expand"}`}></i>
+                                            </button>
+                                            <button
+                                                className="btn btn-sm btn-outline-dark rounded-3"
+                                                onClick={() => { setSelectedDayNumber(null); setExpandedPanel(false); }}>
+                                                <i className="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {selectedProcedure && (
+                                        <div className="mb-3">
+                                            <span className="badge bg-primary rounded-pill px-3 py-1 extra-small">
+                                                <i className="bi bi-funnel-fill me-1"></i>
+                                                Filtrando: {procedures.find(p => p.id == selectedProcedure)?.name}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div style={{ overflowY: "auto", maxHeight: expandedPanel ? "70vh" : "500px" }}>
+                                        {selectedDayAppointments.length > 0 ? (
+                                            selectedDayAppointments.map(appo => (
+                                                <div key={appo.id} className="border rounded-3 p-3 mb-2 bg-white shadow-sm">
+                                                    <div className="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <p className="fw-bold mb-1">{appo.patient_name}</p>
+                                                            <p className="text-muted extra-small mb-1">
+                                                                <i className="bi bi-clock me-1"></i>
+                                                                {new Date(appo.start_date_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </p>
+                                                            <p className="text-muted extra-small mb-1">
+                                                                <i className="bi bi-clipboard-pulse me-1"></i>
+                                                                {appo.specialty_name} — {appo.procedure_name}
+                                                            </p>
+                                                        </div>
+                                                        <span className={`badge bg-${appo.status === 'confirmed' ? 'success' : appo.status === 'cancelled' ? 'danger' : 'warning'}`}>
+                                                            {appo.status === 'confirmed' ? 'CONFIRMADO' : appo.status === 'cancelled' ? 'CANCELADO' : 'PROGRAMADO'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-5">
+                                                <i className="bi bi-calendar-x display-4 text-muted"></i>
+                                                <p className="mt-3 text-muted small">No hay turnos para esta fecha.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h6 className="fw-bold mb-4 ms-1">Lista de Espera Activa</h6>
+                                    <div className="mb-4">
+                                        <p className="section-title urgent py-1 px-2 rounded mb-3">URGENTE (PRÓXIMAS 48H)</p>
+                                        <PatientRow name="Elena Gomez" specialty="Cardiología" />
+                                        <PatientRow name="Raj Patel" specialty="Dermatología" />
+                                    </div>
+                                    <div>
+                                        <p className="section-title routine py-1 px-2 rounded mb-3">RUTINA (PRÓXIMAS 2 SEMANAS)</p>
+                                        <PatientRow name="Adam Cooper" specialty="Dermatología" />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
-                    <div className="col-lg-8">
+                    <div className={expandedPanel ? "d-none" : "col-lg-8"}>
                         <div className="card border-0 shadow-sm rounded-4 p-4">
                             <div className="d-flex justify-content-between align-items-center mb-4">
                                 <h6 className="fw-bold m-0 text-secondary">Pronóstico de Disponibilidad Próxima</h6>
