@@ -32,6 +32,7 @@ export const router = createBrowserRouter(
         <Route path="/calendar" element={<ProtectedRoute adminOnly><Calendar /></ProtectedRoute>} />
         <Route path="/signup" element={<ProtectedRoute adminOnly><Signup /></ProtectedRoute>} />
         <Route path="/new-appointment" element={<ProtectedRoute><NewAppointment /></ProtectedRoute>} />
+        <Route path="/edit-appointment/:id" element={<ProtectedRoute><NewAppointment /></ProtectedRoute>} />
         <Route path="/staff" element={<ProtectedRoute adminOnly><Staff /></ProtectedRoute>} />
         <Route path="/editUser" element={<ProtectedRoute adminOnly><EditUser /></ProtectedRoute>} />
         <Route path="/patients" element={<ProtectedRoute adminOnly><Patients /></ProtectedRoute>} />
