@@ -16,6 +16,7 @@ import { Calendar } from "./pages/Calendar";
 /* import ForgotPassword from "./pages/ForgotPassword"; */
 import ResetPassword from "./pages/ResetPassword";
 import NewAppointment from "./components/NewAppointment";
+import { Patients } from "./pages/Patients";
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -33,6 +34,7 @@ export const router = createBrowserRouter(
         <Route path="/new-appointment" element={<ProtectedRoute><NewAppointment /></ProtectedRoute>} />
         <Route path="/staff" element={<ProtectedRoute adminOnly><Staff /></ProtectedRoute>} />
         <Route path="/editUser" element={<ProtectedRoute adminOnly><EditUser /></ProtectedRoute>} />
+        <Route path="/patients" element={<ProtectedRoute adminOnly><Patients /></ProtectedRoute>} />
       </Route>
     </>
   )
