@@ -4,16 +4,17 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 import useMedicalData from "../hooks/useMedicalData";
 
 const NewAppointment = () => {
-    const { specialties, procedures, loadingMedicalData } = useMedicalData();
+    const { specialties, procedures } = useMedicalData();
     const { store } = useGlobalReducer();
     const [searchParams] = useSearchParams();
     const dateFormUrl = searchParams.get("date");
+    const dniFormUrl = searchParams.get("dni");
 
     const initialFormState = {
         date: dateFormUrl || "",
         start_date_time: "",
         end_date_time: "",
-        dni: "",
+        dni: dniFormUrl || "",
         user_id: store.user?.id || "",
         specialty_id: "",
         procedure_id: "",
@@ -26,11 +27,21 @@ const NewAppointment = () => {
     const [alert, setAlert] = useState({ show: false, msg: "", type: "" });
 
     useEffect(() => {
-        if (formData.procedure_id || formData.date) fetchCapacityProcedures(formData.procedure_id, formData.date);
-    }, [formData.date, formData.procedure_id]);
+        if (formData.procedure_id) {
+            if (formData.date) {
+                fetchCapacityProcedures(formData.procedure_id, formData.date);
+            } else {
+                setCapacity(0);
+            }
+        }
+        else {
+            setCapacity(0);
+        }
+    }, [formData.date, formData.procedure_id, formData.specialty_id]);
 
     const fetchCapacityProcedures = async (procId, date) => {
         if (!procId || !date) return;
+        setLoading(true);
         try {
             const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/procedure-capacity`, {
                 method: "POST",
@@ -45,6 +56,9 @@ const NewAppointment = () => {
                 setCapacity(data);
             }
         } catch (error) { console.error("Error fetching capacity", error); }
+        finally {
+            setLoading(false);
+        }
     };
 
     const handleChange = (e) => {
@@ -135,7 +149,7 @@ const NewAppointment = () => {
                             min={new Date().toISOString().split("T")[0]} required />
                     </div>
 
-                    {formData.date && (
+                    {formData.date && formData.procedure_id && (
                         <div className="mb-4">
                             <label className="form-label fw-bold">Horarios Disponibles:</label>
                             <div className="d-flex flex-wrap gap-2">
@@ -153,7 +167,7 @@ const NewAppointment = () => {
                                             ({slot.is_full ? "0" : `${slot.available_slots}`})
                                         </small>
                                     </button>
-                                )) : <div className="alert alert-light border w-100 p-2 small text-muted">No hay atención este día.</div>}
+                                )) : <div className="alert alert-light border w-100 p-2 small text-muted"> {loading ? "Cargando..." : "No hay atención este día."}</div>}
                             </div>
                         </div>
                     )}
