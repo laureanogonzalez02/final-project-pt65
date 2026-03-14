@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import useMedicalData from "../hooks/useMedicalData";
 
 const NewAppointment = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const isEditMode = !!id;
     const { specialties, procedures } = useMedicalData();
     const { store } = useGlobalReducer();
     const [searchParams] = useSearchParams();
@@ -25,6 +28,19 @@ const NewAppointment = () => {
     const [capacity, setCapacity] = useState(0);
     const [loading, setLoading] = useState(false);
     const [alert, setAlert] = useState({ show: false, msg: "", type: "" });
+    const [originalAppointment, setOriginalAppointment] = useState(null);
+
+    useEffect(() => {
+        if (isEditMode) fetchAppo();
+    }, [id]);
+
+    useEffect(() => {
+        if (!isEditMode) {
+            setFormData(initialFormState);
+            if (setOriginalAppointment) setOriginalAppointment(null);
+            setCapacity(0);
+        }
+    }, [isEditMode]);
 
     useEffect(() => {
         if (formData.procedure_id) {
@@ -38,6 +54,30 @@ const NewAppointment = () => {
             setCapacity(0);
         }
     }, [formData.date, formData.procedure_id, formData.specialty_id]);
+
+    const fetchAppo = async () => {
+        setLoading(true);
+        try {
+            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/appointments/${id}`, {
+                headers: { "Authorization": `Bearer ${store.token}` }
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const dateOnly = data.start_date_time.substring(0, 10);
+                const timePart = data.start_date_time.split(/[ T]/)[1];
+                setOriginalAppointment({
+                    date: dateOnly,
+                    time: timePart ? timePart.substring(0, 5) : ""
+                });
+                setFormData({
+                    ...data,
+                    date: dateOnly,
+                    dni: data.patient_dni
+                });
+            }
+        } catch (error) { console.error("Error fetching appo", error); }
+        finally { setLoading(false); }
+    };
 
     const fetchCapacityProcedures = async (procId, date) => {
         if (!procId || !date) return;
@@ -84,9 +124,15 @@ const NewAppointment = () => {
             end_date_time: `${formData.date} ${formData.end_date_time}`
         };
 
+        const url = isEditMode
+            ? `${import.meta.env.VITE_BACKEND_URL}/api/appointments/${id}`
+            : `${import.meta.env.VITE_BACKEND_URL}/api/create-appointments`;
+
+        const method = isEditMode ? "PUT" : "POST";
+
         try {
-            const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/create-appointments", {
-                method: "POST",
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${store.token}`,
@@ -97,10 +143,18 @@ const NewAppointment = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setAlert({ show: true, msg: "Cita programada con éxito", type: "success" });
-                setFormData(initialFormState);
+                setAlert({
+                    show: true,
+                    msg: isEditMode ? "Turno reprogramado con éxito" : "Turno programado con éxito",
+                    type: "success"
+                });
+                if (isEditMode) {
+                    setTimeout(() => navigate("/"), 1500);
+                } else {
+                    setFormData(initialFormState);
+                }
             } else {
-                setAlert({ show: true, msg: data.msg || "Error al crear la cita", type: "danger" });
+                setAlert({ show: true, msg: data.msg || "Error al crear la Turno", type: "danger" });
             }
         } catch (error) {
             setAlert({ show: true, msg: "Error de conexión con el servidor.", type: "warning" });
@@ -114,8 +168,15 @@ const NewAppointment = () => {
     return (
         <div className="container py-5">
             <div className="signup-card shadow-sm p-4 bg-white rounded mx-auto" style={{ maxWidth: "600px" }}>
-                <h2 className="text-center mb-4 fw-bold">Agendar Turno</h2>
-
+                <h2 className="text-center mb-4 fw-bold">{isEditMode ? "Reprogramar Turno" : "Agendar Turno"}</h2>
+                {isEditMode && originalAppointment && (
+                    <div className="text-center mb-4">
+                        <span className="badge rounded-pill bg-light text-dark border px-3 py-2">
+                            <i className="bi bi-info-circle me-2 text-primary"></i>
+                            Cambiando turno actual del: <strong>{originalAppointment.date}</strong> a las <strong>{originalAppointment.time} hs</strong>
+                        </span>
+                    </div>
+                )}
                 {alert.show && (
                     <div className={`alert alert-${alert.type} alert-dismissible fade show`} role="alert">
                         {alert.msg}
@@ -127,14 +188,14 @@ const NewAppointment = () => {
                     <div className="row mb-3">
                         <div className="col-md-6">
                             <label className="form-label fw-bold">Especialidad</label>
-                            <select className="form-select" name="specialty_id" onChange={handleChange} value={formData.specialty_id} required>
+                            <select className="form-select" name="specialty_id" onChange={handleChange} value={formData.specialty_id} disabled={isEditMode} required>
                                 <option value="">Seleccione...</option>
                                 {specialties.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
                         </div>
                         <div className="col-md-6">
                             <label className="form-label fw-bold">Procedimiento</label>
-                            <select className="form-select" name="procedure_id" onChange={handleChange} disabled={!formData.specialty_id} value={formData.procedure_id} required>
+                            <select className="form-select" name="procedure_id" onChange={handleChange} disabled={!formData.specialty_id || isEditMode} value={formData.procedure_id} required>
                                 <option value="">Seleccione...</option>
                                 {procedures.filter(p => p.specialty_id == formData.specialty_id).map(p => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
@@ -174,13 +235,13 @@ const NewAppointment = () => {
 
                     <div className="mb-3">
                         <label className="form-label fw-bold">DNI del Paciente</label>
-                        <input type="text" className="form-control" name="dni" value={formData.dni} onChange={handleChange} required />
+                        <input type="text" className="form-control" name="dni" value={formData.dni} onChange={handleChange} readOnly={isEditMode || dniFormUrl} required />
                     </div>
 
                     <button type="submit" className="btn btn-success w-100 py-2 fw-bold"
                         disabled={loading || !formData.start_date_time}
                         style={{ backgroundColor: "#2ECC71", border: "none" }}>
-                        {loading ? "Procesando..." : "Confirmar Cita"}
+                        {loading ? "Procesando..." : "Confirmar Turno"}
                     </button>
                 </form>
             </div>
