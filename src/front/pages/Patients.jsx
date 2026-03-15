@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { StoreContext } from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
+import "../styles/patients.css";
 
 export const Patients = () => {
     const { store, dispatch } = useContext(StoreContext);
@@ -85,8 +86,8 @@ export const Patients = () => {
             <div className="row g-4">
                 {filteredPatients.length > 0 ? (
                     filteredPatients.map((patient) => (
-                        <div className="col-12 col-xl-6" key={patient.id}>
-                            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+                        <div className="col-12 col-xl-6" key={patient.id} onClick={() => navigate(`/patient/${patient.id}`)}>
+                            <div className="card border-0 shadow-sm rounded-4 p-4 h-100 patient-card-hover">
                                 <div className="d-flex align-items-start justify-content-between mb-3">
                                     <div className="d-flex gap-3">
                                         <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-success"
@@ -116,7 +117,10 @@ export const Patients = () => {
                                         <i className="fa-solid fa-notes-medical me-1"></i> {patient.appointment_count} Turnos Programados
                                     </div>
                                     <div className="d-flex gap-2">
-                                        <button className="btn btn-outline-dark btn-sm rounded-3 px-3" onClick={() => navigate(`/new-appointment?dni=${patient.dni}`)}
+                                        <button className="btn btn-outline-dark btn-sm rounded-3 px-3" onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/new-appointment?dni=${patient.dni}`);
+                                        }}
                                         >
                                             <i className="fa-regular fa-pen-to-square me-1"></i> Asignar Turno
                                         </button>
