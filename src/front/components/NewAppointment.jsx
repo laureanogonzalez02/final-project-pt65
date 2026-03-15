@@ -124,7 +124,8 @@ const NewAppointment = () => {
         const payload = {
             ...formData,
             start_date_time: `${formData.date} ${formData.start_date_time}`,
-            end_date_time: `${formData.date} ${formData.end_date_time}`
+            end_date_time: `${formData.date} ${formData.end_date_time}`,
+            status: isEditMode ? "postponed" : "scheduled"
         };
 
         const url = isEditMode
