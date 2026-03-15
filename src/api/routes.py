@@ -439,6 +439,27 @@ def update_appointment_status(patient_id):
     
     return jsonify([app.serialize() for app in appointments]), 200
 
+@api.route('/appointments/<int:appo_id>', methods=['PUT']) 
+@jwt_required()
+def update_appointment(appo_id):
+    body = request.get_json()
+    new_status = body.get("status") 
+
+    appointment = db.session.get(Appointment, appo_id)
+    if not appointment:
+        return jsonify({"msg": "Turno no encontrado"}), 404
+
+    appointment.status = new_status
+    if new_status == "confirmed":
+        appointment.confirmed = True
+
+    if new_status == "cancelled":
+        appointment.cancellation_date = datetime.now(timezone.utc)
+        appointment.cancellation_reason = body.get("cancellation_reason", None)
+
+    db.session.commit()
+    return jsonify({"msg": f"Turno actualizado a {new_status}"}), 200
+
     
 
 @api.route('/appointments', methods=['GET'])
