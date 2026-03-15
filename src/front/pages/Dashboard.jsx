@@ -148,7 +148,7 @@ export const Dashboard = () => {
                                             <button
                                                 className="btn btn-outline-dark btn-sm rounded-3 px-3"
                                                 onClick={() => navigate(`/edit-appointment/${appo.id}`)}
-                                                disabled={appo.status !== "scheduled"}
+                                                disabled={appo.status !== "scheduled" && appo.status !== "postponed"}
                                             >
                                                 <i className="fa-regular fa-pen-to-square me-1"></i>
                                                 Editar
