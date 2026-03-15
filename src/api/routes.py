@@ -441,7 +441,7 @@ def update_appointment_status(patient_id):
 
 @api.route('/appointments/<int:appo_id>', methods=['PUT']) 
 @jwt_required()
-def update_appointment_status(appo_id):
+def update_appointment(appo_id):
     body = request.get_json()
     new_status = body.get("status") 
 
