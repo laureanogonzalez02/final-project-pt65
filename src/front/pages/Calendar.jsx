@@ -283,7 +283,10 @@ export const Calendar = () => {
                                         <div className="d-flex gap-2">
                                             <button
                                                 className="btn btn-sm btn-dark rounded-3 px-2"
-                                                onClick={() => navigate("/new-appointment")}>
+                                                onClick={() => {
+                                                    const formattedDate = `${currentYear}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDayNumber).padStart(2, '0')}`;
+                                                    navigate(`/new-appointment?date=${formattedDate}`);
+                                                }}>
                                                 + Nuevo turno
                                             </button>
                                             <button
