@@ -22,26 +22,44 @@ export const Dashboard = () => {
         } catch (err) { console.error("Error cargando turnos:", err); }
     };
 
-    const updateStatus = async (appoId, newStatus) => {
-    try {
-        const resp = await fetch(
-            `${import.meta.env.VITE_BACKEND_URL}/api/appointments/${appoId}`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ status: newStatus }),
-            }
-        );
-        if (resp.ok) {
+    const checkUnconfirmed = async () => {
+        try {
+            await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/appointments/check-unconfirmed`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             await loadTodayAppointments();
+        } catch (err) {
+            console.error("Error checking unconfirmed:", err);
         }
-    } catch (err) {
-        console.error("Error actualizando turno:", err);
-    }
-};
+    };
+
+    useEffect(() => {
+        checkUnconfirmed();
+        const interval = setInterval(checkUnconfirmed, 60000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const updateStatus = async (appoId, newStatus) => {
+        try {
+            const resp = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/appointments/${appoId}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ status: newStatus }),
+                }
+            );
+            if (resp.ok) {
+                await loadTodayAppointments();
+            }
+        } catch (err) {
+            console.error("Error actualizando turno:", err);
+        }
+    };
 
     useEffect(() => {
         loadTodayAppointments();
@@ -74,11 +92,11 @@ export const Dashboard = () => {
     }, [todayAppointments]);
 
     const statusColor = (status) => {
-        if (status === "confirmed") return "success";
+        if (status === "confirmed" || status === "arrived") return "success";
         if (status === "cancelled") return "danger";
-        if (status === "arrived") return "primary";
-        if (status === "delayed") return "secondary";
-        return "warning";
+        if (status === "delayed") return "warning";
+        if (status === "unconfirmed") return "dark";
+        return "secondary";
     };
 
     const statusLabel = (status) => {
@@ -86,6 +104,7 @@ export const Dashboard = () => {
         if (status === "cancelled") return "Cancelado";
         if (status === "arrived") return "Llegó";
         if (status === "delayed") return "Demorado";
+        if (status === "unconfirmed") return "Sin confirmar";
         return "Programado";
     };
 
@@ -174,7 +193,7 @@ export const Dashboard = () => {
                                                 <button
                                                     className="btn btn-outline-dark btn-sm rounded-3 px-3 dropdown-toggle"
                                                     data-bs-toggle="dropdown"
-                                                    aria-expanded="false"
+                                                    disabled={appo.status === "cancelled" || appo.status === "arrived" || appo.status === "unconfirmed"}
                                                 >
                                                     Acciones
                                                 </button>

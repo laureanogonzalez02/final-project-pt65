@@ -443,14 +443,19 @@ def get_appointments_by_patient(patient_id):
 @jwt_required()
 def update_appointment(appo_id):
     body = request.get_json()
-    new_status = body.get("status") 
+    new_status = body.get("status")
+
+    valid_statuses = ["scheduled", "confirmed", "cancelled", "arrived", "delayed", "unconfirmed"]
+    if new_status not in valid_statuses:
+        return jsonify({"msg": f"Estado inválido: {new_status}"}), 400
 
     appointment = db.session.get(Appointment, appo_id)
     if not appointment:
         return jsonify({"msg": "Turno no encontrado"}), 404
 
     appointment.status = new_status
-    if new_status == "confirmed":
+
+    if new_status in ["confirmed", "arrived"]:
         appointment.confirmed = True
 
     if new_status == "cancelled":
@@ -689,3 +694,27 @@ def get_single_patient(patient_id):
         return jsonify({"msg": "Paciente no encontrado"}), 404
 
     return jsonify(patient.serialize()), 200
+
+@api.route('/appointments/check-unconfirmed', methods=['POST'])
+@jwt_required()
+def check_unconfirmed_appointments():
+    now = datetime.now()
+    cutoff = now - timedelta(minutes=15)
+
+    late_appointments = Appointment.query.filter(
+        Appointment.status == "scheduled",
+        Appointment.start_date_time <= cutoff
+    ).all()
+
+    updated = []
+    for appo in late_appointments:
+        appo.status = "unconfirmed"
+        updated.append(appo.id)
+
+    if updated:
+        db.session.commit()
+
+    return jsonify({
+        "msg": f"{len(updated)} turnos marcados como no confirmados",
+        "updated_ids": updated
+    }), 200
