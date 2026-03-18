@@ -126,8 +126,25 @@ export const Staff = () => {
 
 
                                 <div className="mb-4" style={{ color: "#64748b", fontSize: "0.95rem" }}>
-                                    <div className="mb-2"><i className="fa-regular fa-envelope me-2"></i> {user.email}</div>
-                                    <div className="mb-2"><i className="fa-solid fa-phone me-2"></i> {user.phone}</div>
+                                    <div className="mb-2">
+                                        <i className="fa-regular fa-envelope me-2"></i>
+                                        <a
+                                            href={`https://mail.google.com/mail/?view=cm&to=${user.email}`}
+                                            target="_blank"
+                                            style={{ color: "inherit", textDecoration: "none" }}>
+                                            {user.email}
+                                        </a>
+                                    </div>
+                                    <div className="mb-2">
+                                        <i className="fa-solid fa-phone me-2"></i>
+                                        <a
+                                            href={`https://wa.me/${user.phone?.replace(/\D/g, '')}`}
+                                            target="_blank"
+                                            onClick={e => e.stopPropagation()}
+                                            style={{ color: "inherit", textDecoration: "none" }}>
+                                            {user.phone}
+                                        </a>
+                                    </div>
                                     <div><i className="fa-regular fa-id-card me-2"></i> DNI: {user.dni}</div>
                                 </div>
 

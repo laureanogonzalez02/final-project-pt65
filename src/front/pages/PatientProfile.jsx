@@ -94,11 +94,22 @@ export const PatientProfile = () => {
                         <div className="text-start">
                             <p className="small mb-2">
                                 <i className="bi bi-envelope me-2 text-primary"></i>
-                                <strong>Email:</strong> {patient?.email}
+                                <a
+                                    href={`https://mail.google.com/mail/?view=cm&to=${patient.email}`}
+                                    target="_blank"
+                                    style={{ color: "inherit", textDecoration: "none" }}>
+                                    {patient.email}
+                                </a>
                             </p>
                             <p className="small mb-2">
                                 <i className="bi bi-telephone me-2 text-primary"></i>
-                                <strong>Teléfono:</strong> {patient?.phone}
+                                <strong>Teléfono:</strong> <a
+                                    href={`https://wa.me/${patient.phone?.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    onClick={e => e.stopPropagation()}
+                                    style={{ color: "inherit", textDecoration: "none" }}>
+                                    {patient.phone}
+                                </a>
                             </p>
                             <p className="small mb-0">
                                 <i className="bi bi-cake2 me-2 text-primary"></i>

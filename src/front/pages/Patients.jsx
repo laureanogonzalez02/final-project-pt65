@@ -107,8 +107,25 @@ export const Patients = () => {
                                 </div>
 
                                 <div className="mb-4" style={{ color: "#64748b", fontSize: "0.95rem" }}>
-                                    <div className="mb-2"><i className="fa-regular fa-envelope me-2"></i> {patient.email}</div>
-                                    <div className="mb-2"><i className="fa-solid fa-phone me-2"></i> {patient.phone}</div>
+                                    <div className="mb-2">
+                                        <i className="fa-regular fa-envelope me-2"></i>
+                                        <a
+                                            href={`https://mail.google.com/mail/?view=cm&to=${patient.email}`}
+                                            target="_blank"
+                                            style={{ color: "inherit", textDecoration: "none" }}>
+                                            {patient.email}
+                                        </a>
+                                    </div>
+                                    <div className="mb-2">
+                                        <i className="fa-solid fa-phone me-2"></i>
+                                        <a
+                                            href={`https://wa.me/${patient.phone?.replace(/\D/g, '')}`}
+                                            target="_blank"
+                                            onClick={e => e.stopPropagation()}
+                                            style={{ color: "inherit", textDecoration: "none" }}>
+                                            {patient.phone}
+                                        </a>
+                                    </div>
                                     <div><i className="fa-solid fa-cake-candles me-2"></i> Nacimiento: {patient.birth_date}</div>
                                 </div>
 
