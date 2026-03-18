@@ -107,7 +107,7 @@ export const Sidebar = () => {
                     <NavLink to="/patients" className="sidebar-nav-item">
                         <h1> Pacientes </h1>
                     </NavLink>
-                    <NavLink to="/messages" className="sidebar-nav-item">
+                    <NavLink to="/chat" className="sidebar-nav-item">
                         <h1> Mensajes </h1>
                     </NavLink>
                     <NavLink to="/staff" className="sidebar-nav-item">
