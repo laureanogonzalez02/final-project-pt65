@@ -203,3 +203,31 @@ class BlockedSlot(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat()
         }
+
+class Message(db.Model):
+    __tablename__ = "messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    direction: Mapped[str] = mapped_column(String(20), nullable=False)
+    twilio_sid: Mapped[str] = mapped_column(String(50), nullable=True, unique=True)
+    read: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    patient = relationship("Patient")
+    user = relationship("User")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "patient_name": self.patient.full_name if self.patient else None,
+            "user_id": self.user_id,
+            "sender_name": self.user.full_name if self.user else self.patient.full_name,
+            "body": self.body,
+            "direction": self.direction,
+            "twilio_sid": self.twilio_sid,
+            "read": self.read,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }

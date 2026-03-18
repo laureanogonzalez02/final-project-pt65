@@ -1,13 +1,14 @@
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure, ProcedureAvailability
+from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure, ProcedureAvailability, Message
 from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token, get_month_date_range
-from flask_mail import Message
+from flask_mail import Message as mail_message
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import select, extract, or_
 from datetime import datetime, timezone, timedelta
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from twilio.rest import Client
 
 api = Blueprint('api', __name__)
 
@@ -213,7 +214,7 @@ def update_user(user_id):
     db.session.commit()
 
     if deactivated_now:
-        msg = Message(
+        msg = mail_message(
             subject="Aviso: Tu cuenta ha sido deshabilitada",
             sender=current_app.config['MAIL_USERNAME'],
             recipients=[user.email],
@@ -287,7 +288,7 @@ def forgot_password():
 
         reset_link = f"http://localhost:5173/reset-password/{token}"
 
-        msg = Message(
+        msg = mail_message(
             subject="Password Reset Request",
             recipients=[user.email]
         )
@@ -689,3 +690,80 @@ def get_single_patient(patient_id):
         return jsonify({"msg": "Paciente no encontrado"}), 404
 
     return jsonify(patient.serialize()), 200
+
+@api.route("/messages/send", methods=["POST"])
+@jwt_required()
+def send_message():
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    patient_id = data.get("patient_id")
+    body = data.get("body")
+
+    if not patient_id or not body:
+        return jsonify({"msg": "patient_id y body son requeridos"}), 400
+    
+    patient = db.session.get(Patient, patient_id)
+    if not patient or not patient.phone:
+        return jsonify({"msg": "Paciente no encontrado o no tiene telefono"}), 404
+
+    client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
+
+    twilio_message = client.messages.create(
+        body=body,
+        from_=os.getenv("TWILIO_WHATSAPP_NUMBER"),
+        to=f"whatsapp:{patient.phone}"
+    )
+
+    new_message = Message(
+        patient_id=int(patient_id),
+        user_id=int(current_user_id),
+        body=body,
+        direction="outgoing",
+        twilio_sid=twilio_message.sid,
+        read = True
+    )
+
+    db.session.add(new_message)
+    db.session.commit()
+    return jsonify(new_message.serialize()), 201
+
+@api.route("/messages/<int:patient_id>", methods=["GET"])
+@jwt_required()
+def get_messages(patient_id):
+    messages_updated_count = Message.query.filter_by(patient_id=patient_id, direction="incoming", read=False).update({"read": True})
+    db.session.commit()
+
+    messages = Message.query.filter_by(patient_id=patient_id).order_by(Message.created_at.asc()).all()
+
+    return jsonify([message.serialize() for message in messages]), 200
+
+@api.route("/messages/webhook", methods=["POST"])
+def receive_message():
+    from_number = request.values.get("From", "")
+    body = request.values.get("Body", "")
+    phone = from_number.replace("whatsapp:", "")
+
+    patient = Patient.query.filter_by(phone=phone).first()
+    if not patient:
+        return "", 200
+
+    twilio_sid = request.form.get("MessageSid")
+    if Message.query.filter_by(twilio_sid=twilio_sid).first():
+        return "", 200
+
+    new_message = Message(
+        patient_id=patient.id,
+        user_id=None,
+        body=body,
+        direction="incoming",
+        twilio_sid=twilio_sid,
+        read=False
+    )
+
+    db.session.add(new_message)
+    db.session.commit()
+    return "", 200
+
+
+    
+    
