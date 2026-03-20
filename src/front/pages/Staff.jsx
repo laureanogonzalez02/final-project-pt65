@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState, useMemo } from "react";
 import { StoreContext } from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { NavLink } from "react-router-dom";
@@ -6,6 +6,33 @@ import { NavLink } from "react-router-dom";
 export const Staff = () => {
     const navigate = useNavigate()
     const { store, dispatch } = useContext(StoreContext);
+    const [todayAppointments, setTodayAppointments] = useState([]);
+
+    const loadTodayAppointments = async () => {
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const year = today.getFullYear();
+        try {
+            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/appointments?month=${month}&year=${year}`, {
+                headers: { "Authorization": `Bearer ${store.token}` }
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const todayNumber = today.getDate();
+                const filtered = data.filter(a => {
+                    const d = new Date(a.start_date_time);
+                    return d.getDate() === todayNumber && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear() && a.status !== "cancelled";
+                });
+                setTodayAppointments(filtered);
+            }
+        } catch (err) { console.error("Error cargando turnos:", err); }
+    };
+
+    const getAppoCountForUser = (userId) => {
+        return todayAppointments.filter(a => a.staff_id === userId).length;
+    };
+
+    const totalManagedToday = todayAppointments.length;
 
     const getStaff = async () => {
         const backendURL = import.meta.env.VITE_BACKEND_URL;
@@ -34,6 +61,7 @@ export const Staff = () => {
 
     useEffect(() => {
         getStaff();
+        loadTodayAppointments();
     }, []);
 
     const handleEditClick = (user) => {
@@ -83,7 +111,7 @@ export const Staff = () => {
                     { label: "Total Personal", value: store.staffList.length, color: "text-dark" },
                     { label: "Disponibles Ahora", value: store.staffList.filter(user => user.is_active).length, color: "text-success" },
                     { label: "Inactivos", value: store.staffList.filter(user => !user.is_active).length, color: "text-warning" },
-                    { label: "Turnos Gestionados Hoy", value: "0", color: "text-dark" }
+                    { label: "Turnos Gestionados Hoy", value: totalManagedToday, color: "text-dark" }
                 ].map((stat, idx) => (
                     <div className="col-12 col-md-3" key={idx}>
                         <div className="card border-0 shadow-sm p-3 rounded-4">
@@ -151,7 +179,7 @@ export const Staff = () => {
 
                                 <div className="pt-3 border-top d-flex justify-content-between align-items-center">
                                     <div className="text-muted small">
-                                        <i className="fa-regular fa-calendar me-1"></i> Hoy: 12 turnos
+                                        <i className="fa-regular fa-calendar me-1"></i> Hoy: {getAppoCountForUser(user.id)} turnos
                                     </div>
                                     <div className="d-flex gap-2">
                                         <button className="btn btn-outline-secondary btn-sm rounded-3 px-3">
