@@ -231,3 +231,27 @@ class Message(db.Model):
             "read": self.read,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+
+    def serialize(self):
+        link = None
+        if "recuperación" in self.message.lower():
+            link = "/" 
+
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "message": self.message,
+            "is_read": self.is_read,
+            "link": link,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }

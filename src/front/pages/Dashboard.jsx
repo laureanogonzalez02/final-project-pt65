@@ -31,13 +31,27 @@ export const Dashboard = () => {
             if (resp.ok) {
                 const data = await resp.json();
                 setGeneratedLink(data.reset_url);
-                setNotifications(notifications.filter(n => n.id !== userId));
+                setNotifications(prev => prev.filter(n => n.id !== userId));
 
                 const modalElement = document.getElementById('linkModal');
                 const modal = new bootstrap.Modal(modalElement);
                 modal.show();
             }
         } catch (err) { console.error("Error:", err); }
+    };
+
+    const rejectReset = async (userId) => {
+        if (window.confirm("¿Está seguro de rechazar este cambio de contraseña?")) {
+            try {
+                const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reject-reset/${userId}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (resp.ok) {
+                    setNotifications(prev => prev.filter(n => n.id !== userId));
+                }
+            } catch (err) { console.error("Error rechazando la solicitud:", err); }
+        }
     };
 
 
@@ -196,9 +210,14 @@ export const Dashboard = () => {
                             <small className="text-muted">{n.full_name} ({n.email})</small>
                         </div>
                     </div>
-                    <button className="btn btn-primary btn-sm rounded-3 px-3 fw-bold" onClick={() => approveReset(n.id)}>
-                        Aprobar y generar link
-                    </button>
+                    <div className="d-flex gap-2">
+                        <button className="btn btn-outline-danger btn-sm rounded-3 px-3 fw-bold" onClick={() => rejectReset(n.id)}>
+                            Rechazar
+                        </button>
+                        <button className="btn btn-primary btn-sm rounded-3 px-3 fw-bold" onClick={() => approveReset(n.id)}>
+                            Aprobar y generar link
+                        </button>
+                    </div>
                 </div>
             ))}
             <div className="modal fade" id="linkModal" tabIndex="-1" aria-hidden="true">

@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure, ProcedureAvailability, Message
+from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure, ProcedureAvailability, Message, Notification
 from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token, get_month_date_range
 from flask_mail import Message as mail_message
 from flask_cors import CORS
@@ -286,6 +286,15 @@ def forgot_password():
             "full_name": user.full_name,
             "timestamp": datetime.now(timezone.utc).strftime("%H:%M")
         })
+        
+        admins = User.query.filter_by(role="admin").all()
+        for admin in admins:
+            notif = Notification(
+                user_id=admin.id,
+                message=f"Solicitud de recuperación de contraseña para {user.full_name} ({user.email})."
+            )
+            db.session.add(notif)
+        db.session.commit()
     
     return jsonify({"msg": "Solicitud recibida"}), 200
 
@@ -323,6 +332,20 @@ def generate_reset(user_id):
         "reset_token": token,
         "reset_url": f"http://localhost:3000/reset-password/{token}"
     }), 200
+
+@api.route("/reject-reset/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+def reject_reset(user_id):
+    current_user = get_jwt_identity()
+    admin = db.session.get(User, current_user)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Solo los administradores pueden rechazar esto"}), 403
+
+    global pending_resets
+    pending_resets = [r for r in pending_resets if r['id'] != user_id]
+
+    return jsonify({"msg": "Solicitud rechazada exitosamente"}), 200
 
 @api.route("/reset-password", methods=["POST"])
 def reset_password():
@@ -426,6 +449,15 @@ def create_appointment():
         )
 
         db.session.add(new_appointment)
+        
+        admins = User.query.filter_by(role="admin").all()
+        for admin in admins:
+            notif = Notification(
+                user_id=admin.id,
+                message=f"Nuevo turno agendado para {patient.full_name} el {start_dt.strftime('%d/%m/%Y %H:%M')}."
+            )
+            db.session.add(notif)
+        
         db.session.commit()
 
         return jsonify({
@@ -801,6 +833,27 @@ def get_all_patients():
         results.append(patient_data)
 
     return jsonify(results), 200
+
+@api.route('/notifications', methods=['GET'])
+@jwt_required()
+def get_user_notifications():
+    current_user_id = get_jwt_identity()
+    notifications = Notification.query.filter_by(user_id=int(current_user_id)).order_by(Notification.created_at.desc()).limit(20).all()
+    return jsonify([n.serialize() for n in notifications]), 200
+
+@api.route('/notifications/<int:notification_id>/read', methods=['PUT'])
+@jwt_required()
+def mark_notification_read(notification_id):
+    current_user_id = get_jwt_identity()
+    notification = db.session.get(Notification, notification_id)
+    if not notification:
+        return jsonify({"msg": "Notificación no encontrada"}), 404
+    if str(notification.user_id) != str(current_user_id):
+        return jsonify({"msg": "No autorizado"}), 403
+    
+    notification.is_read = True
+    db.session.commit()
+    return jsonify({"msg": "Notificación marcada como leída", "notification": notification.serialize()}), 200
 
 @api.route('/patients/<int:patient_id>', methods=['GET'])
 @jwt_required()
