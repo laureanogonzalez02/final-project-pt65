@@ -90,7 +90,7 @@
 }
 
 .status-scheduled {
-  background-color: #6c757d;
+  background-color: #f39c12;
 }
 
 .status-cancelled {
@@ -98,7 +98,7 @@
 }
 
 .status-delayed {
-  background-color: #ffc107;
+  background-color: #343a40;
 }
 
 .status-postponed {

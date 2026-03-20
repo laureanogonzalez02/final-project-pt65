@@ -12,7 +12,7 @@ export const PatientProfile = () => {
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState({ start: "", end: "" });
     const statusTranslations = {
-        scheduled: "Sin confirmar",
+        scheduled: "Programado",
         confirmed: "Confirmado",
         cancelled: "Cancelado",
         postponed: "Pospuesto",
@@ -73,8 +73,8 @@ export const PatientProfile = () => {
         if (s === "confirmed") return "success";
         if (s === "cancelled") return "danger";
         if (s === "postponed") return "info";
-        if (s === "delayed") return "warning";
-        if (s === "scheduled") return "secondary";
+        if (s === "delayed") return "dark";
+        if (s === "scheduled") return "warning";
         return "dark";
     };
 

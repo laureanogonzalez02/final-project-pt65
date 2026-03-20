@@ -323,15 +323,15 @@ export const Calendar = () => {
                                                         <span className={`badge bg-${{
                                                             confirmed: 'success',
                                                             cancelled: 'danger',
-                                                            delayed: 'warning',
-                                                            scheduled: 'secondary',
+                                                            delayed: 'dark',
+                                                            scheduled: 'warning',
                                                             postponed: 'info'
                                                         }[appo.status] || 'dark'}`}>
                                                             {{
                                                                 confirmed: 'Confirmado',
                                                                 cancelled: 'Cancelado',
                                                                 delayed: 'Demorado',
-                                                                scheduled: 'Sin confirmar',
+                                                                scheduled: 'Programado',
                                                                 postponed: 'Pospuesto'
                                                             }[appo.status] || appo.status}
                                                         </span>

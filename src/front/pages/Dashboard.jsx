@@ -162,17 +162,17 @@ export const Dashboard = () => {
     const statusColor = (status) => {
         if (status === "confirmed") return "success";
         if (status === "cancelled") return "danger";
-        if (status === "delayed") return "warning";
-        if (status === "scheduled") return "secondary";
+        if (status === "delayed") return "dark";
+        if (status === "scheduled") return "warning";
         if (status === "postponed") return "info";
-        return "dark";
+        return "secondary";
     };
 
     const statusLabel = (status) => {
         if (status === "confirmed") return "Confirmado";
         if (status === "cancelled") return "Cancelado";
         if (status === "delayed") return "Demorado";
-        if (status === "scheduled") return "Sin confirmar";
+        if (status === "scheduled") return "Programado";
         if (status === "postponed") return "Pospuesto";
         return status;
     };
@@ -253,10 +253,11 @@ export const Dashboard = () => {
                 {[
                     { label: "Turnos Hoy", value: stats.total, icon: "bi-calendar-check", color: "#2ECC71", bg: "#eafaf1" },
                     { label: "Confirmados", value: stats.confirmed, icon: "bi-check-circle", color: "#2ECC71", bg: "#eafaf1" },
-                    { label: "Sin confirmar", value: stats.scheduled, icon: "bi-question-circle", color: "#1a1a1a", bg: "#f1f3f5" },
+                    { label: "Programados", value: stats.scheduled, icon: "bi-clock", color: "#f39c12", bg: "#fef9e7" },
+                    { label: "Demorados", value: stats.delayed, icon: "bi-exclamation-circle", color: "#1a1a1a", bg: "#f1f3f5" },
                     { label: "Cancelados", value: stats.cancelled, icon: "bi-x-circle", color: "#e74c3c", bg: "#fdedec" },
                 ].map((stat, idx) => (
-                    <div className="col-6 col-md-3" key={idx}>
+                    <div className="col" key={idx}>
                         <div className="card border-0 shadow-sm rounded-4 p-3">
                             <div className="d-flex align-items-center gap-3">
                                 <div className="rounded-3 d-flex align-items-center justify-content-center"
