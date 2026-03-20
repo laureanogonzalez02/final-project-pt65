@@ -118,8 +118,7 @@ export const Sidebar = () => {
                     {isOpen && (
                         <div className="dropdown-menu-up" ref={dropdownMenuRef}>
                             <ul>
-                                <li> {svgProfile} Ver Perfil</li>
-                                <li> {svgSettings} Opciones</li>
+                                <li onClick={() => { setIsOpen(false); window.location.href = "/staff"; }}> {svgProfile} Ver Perfil</li>
                                 <li className="logout" data-bs-target="#confirmEditModalSession" data-bs-toggle="modal">
                                     {svgLogout} Cerrar Sesión
                                 </li>
