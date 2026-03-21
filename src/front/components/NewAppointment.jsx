@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate, useLocation } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import useMedicalData from "../hooks/useMedicalData";
 import ConfirmModal from "./ConfirmModal";
@@ -11,15 +11,16 @@ const NewAppointment = () => {
     const { specialties, procedures } = useMedicalData();
     const { store } = useGlobalReducer();
     const [searchParams] = useSearchParams();
-    const dateFormUrl = searchParams.get("date");
-    const dniFormUrl = searchParams.get("dni");
-    const procedureIdFromUrl = searchParams.get("procedure_id");
-    const specialtyIdFromUrl = searchParams.get("specialty_id");
+    const { state } = useLocation();
+    const dateFormUrl = searchParams.get("date") || state?.slot?.date || "";
+    const dniFormUrl = searchParams.get("dni") || state?.patient?.dni || "";
+    const procedureIdFromUrl = searchParams.get("procedure_id") || state?.slot?.procedure_id || "";
+    const specialtyIdFromUrl = searchParams.get("specialty_id") || state?.slot?.specialty_id || "";
 
     const initialFormState = {
         date: dateFormUrl || "",
-        start_date_time: "",
-        end_date_time: "",
+        start_date_time: state?.slot?.start_time || "",
+        end_date_time: state?.slot?.end_time || "",
         dni: dniFormUrl || "",
         user_id: store.user?.id || "",
         specialty_id: specialtyIdFromUrl || "",
