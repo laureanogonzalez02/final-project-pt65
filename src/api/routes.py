@@ -898,7 +898,7 @@ def update_patient(patient_id):
 @jwt_required()
 def get_ai_chat_suggestion():
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    model = genai.GenerativeModel("gemini-3-flash-preview")
+    model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
     data = request.get_json()
     patient_id = data.get("patient_id")
     if not patient_id:

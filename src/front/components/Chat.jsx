@@ -91,7 +91,7 @@ export default function Chat() {
             return;
         };
         setAiLoading(true);
-        setDismissedSlots
+        setDismissedSlots([]);
         fetch(`${BACKEND}/api/ai/chat-suggestion`, {
             method: "POST",
             headers: {
