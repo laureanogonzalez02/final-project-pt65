@@ -670,6 +670,15 @@ def receive_message():
     )
 
     db.session.add(new_message)
+
+    admins = User.query.filter_by(role="admin").all()
+    for admin in admins:
+        notif = Notification(
+            user_id=admin.id,
+            message=f"Nuevo mensaje de WhatsApp de {patient.full_name}: '{body}'"
+        )
+        db.session.add(notif)
+        
     db.session.commit()
     return "", 200
 
