@@ -108,13 +108,13 @@ export default function Chat() {
 
 
     return (
-        <div className="bg-light min-vh-100 p-4">
-            <div className="mb-4">
+        <div className="bg-light p-4 d-flex flex-column" style={{ height: "calc(100vh - 75px)", overflow: "hidden" }}>
+            <div className="mb-4" style={{ flexShrink: 0 }}>
                 <h4 className="fw-bold mb-0">Mensajes</h4>
                 <p className="text-muted small mb-0">Conversaciones recientes con pacientes</p>
             </div>
 
-            <div style={{ display: "flex", gap: "1rem", height: "calc(100vh - 200px)" }}>
+            <div style={{ display: "flex", gap: "1rem", flex: 1, minHeight: 0 }}>
                 {/* Columna Izquierda: El Chat */}
                 <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{ flex: 1, height: "100%" }}>
                     <div style={{ height: "100%", position: "relative" }}>
@@ -229,6 +229,11 @@ export default function Chat() {
                                                     <div className="fw-semibold small">
                                                         {new Date(slot.date + "T00:00:00").toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" })}
                                                     </div>
+                                                    {aiSuggestion.detected_procedure.type === "specialty" && (
+                                                        <div className="text-primary small fw-medium mt-1 mb-1">
+                                                            {slot.procedure_name}
+                                                        </div>
+                                                    )}
                                                     <div className="text-muted small">{slot.start_time.slice(0, 5)} hs</div>
                                                     <div className="text-success small">{slot.available_slots} lugar{slot.available_slots !== 1 ? "es" : ""}</div>
                                                 </div>

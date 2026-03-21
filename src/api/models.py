@@ -51,6 +51,9 @@ class Patient(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True, nullable=False)
+    last_ai_message_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    ai_detected_procedure_id: Mapped[int] = mapped_column(ForeignKey("procedures.id"), nullable=True)
+    ai_detected_specialty_id: Mapped[int] = mapped_column(ForeignKey("specialties.id"), nullable=True)
 
     def serialize(self):
         return {
@@ -64,7 +67,10 @@ class Patient(db.Model):
             "address": self.address,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "is_active": self.is_active
+            "is_active": self.is_active,
+            "last_ai_message_id": self.last_ai_message_id,
+            "ai_detected_procedure_id": self.ai_detected_procedure_id,
+            "ai_detected_specialty_id": self.ai_detected_specialty_id
         }
 
 

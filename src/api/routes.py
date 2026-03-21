@@ -898,7 +898,7 @@ def update_patient(patient_id):
 @jwt_required()
 def get_ai_chat_suggestion():
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    model = genai.GenerativeModel("gemini-3-flash-preview")
+    model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
     data = request.get_json()
     patient_id = data.get("patient_id")
     if not patient_id:
@@ -907,47 +907,129 @@ def get_ai_chat_suggestion():
     recent_messages = (
         Message.query.filter_by(patient_id=patient_id, direction="incoming")
         .order_by(Message.created_at.desc())
-        .limit(10)
+        .limit(5)
         .all()
     )
 
     if not recent_messages:
         return jsonify({"detected_procedure": None, "available_slots": []}), 200
 
-    conversation = "\n".join([f"- {m.body}" for m in reversed(recent_messages)])
+    patient = Patient.query.get(patient_id)
+    latest_message = recent_messages[0]
 
     all_procedures = Procedure.query.all()
-    procedure_list = "\n".join([f"- ID {p.id}: {p.name} (Especialidad ID {p.specialty_id})" for p in all_procedures])
+    all_specialties = Specialty.query.all()
 
-    prompt = (
-        "Sos un asistente de un centro médico. Analizá los siguientes mensajes de un paciente "
-        "y determiná si está pidiendo turno para algún procedimiento médico.\n\n"
-        f"Mensajes del paciente:\n{conversation}\n\n"
-        f"Procedimientos disponibles en el sistema:\n{procedure_list}\n\n"
-        "Respondé SOLO con este formato JSON, sin markdown:\n"
-        '{"procedure_id": 3, "procedure_name": "Tomografía"}\n'
-        "Si el paciente no está pidiendo ningún turno, respondé:\n"
-        '{"procedure_id": null, "procedure_name": null}'
-    )
+    def get_cached_result(patient, all_procedures, all_specialties):
+        pid = patient.ai_detected_procedure_id
+        sid = patient.ai_detected_specialty_id
+        res = {"procedure_id": pid, "specialty_id": sid}
+        if pid:
+            proc = next((p for p in all_procedures if p.id == pid), None)
+            res["procedure_name"] = proc.name if proc else None
+        elif sid:
+            spec = next((s for s in all_specialties if s.id == sid), None)
+            res["specialty_name"] = spec.name if spec else None
+        return res
 
-    try:
-        response = model.generate_content(prompt)
-        raw = response.text.strip()
-        if raw.startswith("```"):
-            parts = raw.split("```")
-            raw = parts[1] if len(parts) > 1 else parts[0]
-            if raw.startswith("json"):
-                raw = raw[4:]
-            raw = raw.strip()
-        ai_result = json_lib.loads(raw)
-    except Exception:
-        return jsonify({"detected_procedure": None, "available_slots": []}), 200
+    if patient.last_ai_message_id == latest_message.id:
+        ai_result = get_cached_result(patient, all_procedures, all_specialties)
+        if not ai_result.get("procedure_id") and not ai_result.get("specialty_id"):
+            return jsonify({"detected_procedure": None, "available_slots": []}), 200
+    else:
+        keywords = set()
+        for p in all_procedures:
+            keywords.update(p.name.lower().split())
+        for s in all_specialties:
+            keywords.update(s.name.lower().split())
+        keywords = {k.strip() for k in keywords if len(k) > 3}
+
+        relevant_messages = []
+        for m in recent_messages:
+            if patient.last_ai_message_id and m.id <= patient.last_ai_message_id:
+                break
+            msg_lower = m.body.lower()
+            if any(kw in msg_lower for kw in keywords):
+                relevant_messages.append(m)
+
+        if not relevant_messages:
+            patient.last_ai_message_id = latest_message.id
+            db.session.commit()
+            
+            ai_result = get_cached_result(patient, all_procedures, all_specialties)
+            if not ai_result.get("procedure_id") and not ai_result.get("specialty_id"):
+                return jsonify({"detected_procedure": None, "available_slots": []}), 200
+        else:
+            conversation = "\n".join([f"- {m.body}" for m in reversed(recent_messages)])
+
+            procedure_list = "\n".join([f"- ID {p.id}: {p.name} (Especialidad ID {p.specialty_id})" for p in all_procedures])
+            specialty_list = "\n".join([f"- ID {s.id}: {s.name}" for s in all_specialties])
+
+            prompt = (
+                "Sos un asistente de un centro médico. Analizá los mensajes de un paciente "
+                "y determiná si está pidiendo turno y para qué especialidad o procedimiento.\n\n"
+                f"Mensajes del paciente:\n{conversation}\n\n"
+                f"Especialidades disponibles:\n{specialty_list}\n\n"
+                f"Procedimientos disponibles en el sistema:\n{procedure_list}\n\n"
+                "IMPORTANTE: Respondé ÚNICAMENTE con UN SOLO objeto JSON que represente la conclusión de TODA la conversación en base al último pedido explícito. No hagas una lista, ni un array. El JSON debe ir en la raíz con estas claves exactas:\n"
+                "Si el paciente pide un procedimiento específico:\n"
+                '{"procedure_id": 3, "procedure_name": "Tomografía", "specialty_id": null, "specialty_name": null}\n'
+                "Si pide una especialidad de forma genérica (ej. odontólogo, dentista, cardiólogo) pero no un procedimiento específico:\n"
+                '{"procedure_id": null, "procedure_name": null, "specialty_id": 1, "specialty_name": "Cardiología"}\n'
+                "Si no está pidiendo turno, o no encontrás la especialidad/procedimiento en la lista:\n"
+                '{"procedure_id": null, "procedure_name": null, "specialty_id": null, "specialty_name": null}'
+            )
+
+            try:
+                response = model.generate_content(prompt)
+                raw = response.text.strip()
+                
+                import re
+                match = re.search(r'\{.*\}', raw, re.DOTALL)
+                if match:
+                    raw = match.group(0)
+                    
+                ai_result = json_lib.loads(raw)
+                
+                if isinstance(ai_result, dict) and "turnos" in ai_result and isinstance(ai_result["turnos"], list):
+                    ai_list = ai_result["turnos"]
+                elif isinstance(ai_result, list):
+                    ai_list = ai_result
+                else:
+                    ai_list = []
+                    
+                if ai_list:
+                    for item in reversed(ai_list):
+                        if item.get("procedure_id") or item.get("specialty_id"):
+                            ai_result = item
+                            break
+                    else:
+                        ai_result = ai_list[-1] if ai_list else {}
+                        
+            except Exception as e:
+                return jsonify({"detected_procedure": None, "available_slots": []}), 200
+
+            patient.last_ai_message_id = latest_message.id
+            patient.ai_detected_procedure_id = ai_result.get("procedure_id")
+            patient.ai_detected_specialty_id = ai_result.get("specialty_id")
+            db.session.commit()
 
     procedure_id = ai_result.get("procedure_id")
-    procedure_name = ai_result.get("procedure_name")
+    specialty_id = ai_result.get("specialty_id")
 
-    if not procedure_id:
+    if not procedure_id and not specialty_id:
         return jsonify({"detected_procedure": None, "available_slots": []}), 200
+
+    procedures_to_check = []
+    if procedure_id:
+        procedures_to_check = [procedure_id]
+        detected_entity = {"id": procedure_id, "name": ai_result.get("procedure_name"), "type": "procedure"}
+    else:    
+        procs = Procedure.query.filter_by(specialty_id=specialty_id).all()
+        procedures_to_check = [p.id for p in procs]
+        if not procedures_to_check:
+            return jsonify({"detected_procedure": None, "available_slots": []}), 200
+        detected_entity = {"id": specialty_id, "name": ai_result.get("specialty_name"), "type": "specialty"}
     
     today = datetime.now().date()
     available_slots = []
@@ -955,9 +1037,10 @@ def get_ai_chat_suggestion():
     for days_ahead in range(0, 30):
         check_date = today + timedelta(days=days_ahead)
         day_of_week = check_date.weekday()
-        slots = ProcedureAvailability.query.filter_by(
-            procedure_id=procedure_id,
-            day_of_week=day_of_week
+        
+        slots = ProcedureAvailability.query.filter(
+            ProcedureAvailability.procedure_id.in_(procedures_to_check),
+            ProcedureAvailability.day_of_week == day_of_week
         ).all()
         
         for slot in slots:
@@ -968,25 +1051,28 @@ def get_ai_chat_suggestion():
                 continue
             
             booked = Appointment.query.filter(
-                Appointment.procedure_id == procedure_id,
+                Appointment.procedure_id == slot.procedure_id,
                 Appointment.start_date_time == slot_start_dt,
                 Appointment.status != "cancelled"
             ).count()
             
             if booked < slot.capacity:
-                procedure = Procedure.query.get(procedure_id)
+                procedure = Procedure.query.get(slot.procedure_id)
                 available_slots.append({
                     "date": check_date.isoformat(),
                     "start_time": slot.start_time.strftime("%H:%M:%S"),
                     "end_time": slot.end_time.strftime("%H:%M:%S"),
                     "available_slots": slot.capacity - booked,
-                    "procedure_id": procedure_id,
-                    "specialty_id": procedure.specialty_id if procedure else None
+                    "procedure_id": slot.procedure_id,
+                    "procedure_name": procedure.name,
+                    "specialty_id": procedure.specialty_id
                 })
 
-        if len(available_slots) >= 5:
+        if len(available_slots) >= 10:
             break       
 
-    return jsonify({"detected_procedure": {"id": procedure_id, "name": procedure_name}, "available_slots": available_slots}), 200
+    available_slots = sorted(available_slots, key=lambda x: (x["date"], x["start_time"]))[:5]
+
+    return jsonify({"detected_procedure": detected_entity, "available_slots": available_slots}), 200
 
     
