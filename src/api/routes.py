@@ -11,6 +11,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from twilio.rest import Client
 import google.generativeai as genai
 import json as json_lib
+import unicodedata
 
 api = Blueprint('api', __name__)
 pending_resets = []
@@ -912,10 +913,19 @@ def get_ai_chat_suggestion():
     )
 
     if not recent_messages:
-        return jsonify({"detected_procedure": None, "available_slots": []}), 200
+        return jsonify({"detected_procedure": None, "available_slots": [], "is_expired": False}), 200
 
     patient = Patient.query.get(patient_id)
     latest_message = recent_messages[0]
+
+    msg_time = latest_message.created_at
+    if msg_time and msg_time.tzinfo is None:
+        now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+        time_diff = now_utc - msg_time
+    else:
+        time_diff = datetime.now(timezone.utc) - (msg_time or datetime.now(timezone.utc))
+
+    is_expired = time_diff.total_seconds() > 1800
 
     all_procedures = Procedure.query.all()
     all_specialties = Specialty.query.all()
@@ -935,20 +945,26 @@ def get_ai_chat_suggestion():
     if patient.last_ai_message_id == latest_message.id:
         ai_result = get_cached_result(patient, all_procedures, all_specialties)
         if not ai_result.get("procedure_id") and not ai_result.get("specialty_id"):
-            return jsonify({"detected_procedure": None, "available_slots": []}), 200
+            return jsonify({"detected_procedure": None, "available_slots": [], "is_expired": is_expired}), 200
     else:
+        def remove_accents(input_str):
+            if not input_str:
+                return input_str
+            nfkd_form = unicodedata.normalize('NFKD', input_str)
+            return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
+
         keywords = set()
         for p in all_procedures:
-            keywords.update(p.name.lower().split())
+            keywords.update(remove_accents(p.name.lower()).split())
         for s in all_specialties:
-            keywords.update(s.name.lower().split())
+            keywords.update(remove_accents(s.name.lower()).split())
         keywords = {k.strip() for k in keywords if len(k) > 3}
 
         relevant_messages = []
         for m in recent_messages:
             if patient.last_ai_message_id and m.id <= patient.last_ai_message_id:
                 break
-            msg_lower = m.body.lower()
+            msg_lower = remove_accents(m.body.lower())
             if any(kw in msg_lower for kw in keywords):
                 relevant_messages.append(m)
 
@@ -958,7 +974,7 @@ def get_ai_chat_suggestion():
             
             ai_result = get_cached_result(patient, all_procedures, all_specialties)
             if not ai_result.get("procedure_id") and not ai_result.get("specialty_id"):
-                return jsonify({"detected_procedure": None, "available_slots": []}), 200
+                return jsonify({"detected_procedure": None, "available_slots": [], "is_expired": is_expired}), 200
         else:
             conversation = "\n".join([f"- {m.body}" for m in reversed(recent_messages)])
 
@@ -1007,7 +1023,7 @@ def get_ai_chat_suggestion():
                         ai_result = ai_list[-1] if ai_list else {}
                         
             except Exception as e:
-                return jsonify({"detected_procedure": None, "available_slots": []}), 200
+                return jsonify({"detected_procedure": None, "available_slots": [], "is_expired": is_expired}), 200
 
             patient.last_ai_message_id = latest_message.id
             patient.ai_detected_procedure_id = ai_result.get("procedure_id")
@@ -1018,7 +1034,7 @@ def get_ai_chat_suggestion():
     specialty_id = ai_result.get("specialty_id")
 
     if not procedure_id and not specialty_id:
-        return jsonify({"detected_procedure": None, "available_slots": []}), 200
+        return jsonify({"detected_procedure": None, "available_slots": [], "is_expired": is_expired}), 200
 
     procedures_to_check = []
     if procedure_id:
@@ -1028,7 +1044,7 @@ def get_ai_chat_suggestion():
         procs = Procedure.query.filter_by(specialty_id=specialty_id).all()
         procedures_to_check = [p.id for p in procs]
         if not procedures_to_check:
-            return jsonify({"detected_procedure": None, "available_slots": []}), 200
+            return jsonify({"detected_procedure": None, "available_slots": [], "is_expired": is_expired}), 200
         detected_entity = {"id": specialty_id, "name": ai_result.get("specialty_name"), "type": "specialty"}
     
     today = datetime.now().date()
@@ -1073,6 +1089,6 @@ def get_ai_chat_suggestion():
 
     available_slots = sorted(available_slots, key=lambda x: (x["date"], x["start_time"]))[:5]
 
-    return jsonify({"detected_procedure": detected_entity, "available_slots": available_slots}), 200
+    return jsonify({"detected_procedure": detected_entity, "available_slots": available_slots, "is_expired": is_expired}), 200
 
     

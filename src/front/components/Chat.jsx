@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useGlobalReducer from '../hooks/useGlobalReducer';
 import { useNavigate } from 'react-router-dom';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
@@ -31,6 +31,17 @@ export default function Chat() {
     const [aiSuggestion, setAiSuggestion] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
     const [dismissedSlots, setDismissedSlots] = useState([]);
+    const [animationClass, setAnimationClass] = useState("");
+    const [showExpired, setShowExpired] = useState(false);
+
+    // Trigger animation when suggestion updates silently
+    useEffect(() => {
+        if (aiSuggestion && aiSuggestion.detected_procedure) {
+            setAnimationClass("pulse-animation");
+            const timer = setTimeout(() => setAnimationClass(""), 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [aiSuggestion]);
 
     // Load patients on mount
     useEffect(() => {
@@ -84,14 +95,25 @@ export default function Chat() {
         }
     };
 
-    // Call the AI when active patient changes
+    // Call the AI when active patient changes or new messages arrive
+    const prevPatientIdRef = useRef(null);
+
     useEffect(() => {
         if (!activePatientId) {
             setAiSuggestion(null);
             return;
-        };
-        setAiLoading(true);
-        setDismissedSlots
+        }
+
+        const isNewPatient = prevPatientIdRef.current !== activePatientId;
+        prevPatientIdRef.current = activePatientId;
+
+        if (isNewPatient) {
+            setAiLoading(true);
+            setAiSuggestion(null);
+            setDismissedSlots([]);
+            setShowExpired(false);
+        }
+
         fetch(`${BACKEND}/api/ai/chat-suggestion`, {
             method: "POST",
             headers: {
@@ -101,10 +123,15 @@ export default function Chat() {
             body: JSON.stringify({ patient_id: activePatientId })
         })
             .then(r => r.json())
-            .then(data => setAiSuggestion(data))
+            .then(data => {
+                setAiSuggestion(data);
+                if (data && !data.is_expired) {
+                    setShowExpired(false);
+                }
+            })
             .catch(err => console.error("Error cargando sugerencia AI:", err))
             .finally(() => setAiLoading(false));
-    }, [activePatientId]);
+    }, [activePatientId, messages.length]);
 
 
     return (
@@ -201,7 +228,7 @@ export default function Chat() {
 
                 {/* right column: AI suggestions panel */}
                 {activePatient && (
-                    <div className="card border-0 shadow-sm rounded-4" style={{ width: "320px", overflowY: "auto", backgroundColor: "#fff" }}>
+                    <div className={`card border-0 shadow-sm rounded-4 ${animationClass}`} style={{ width: "320px", overflowY: "auto", backgroundColor: "#fff" }}>
                         <div className="p-3">
                             <h6 className="fw-bold mb-3 d-flex align-items-center gap-2">
                                 Sugerencia de IA
@@ -215,6 +242,16 @@ export default function Chat() {
                             ) : !aiSuggestion?.detected_procedure ? (
                                 <div className="text-center py-4">
                                     <p className="text-muted small">Sin pedido de turno detectado en los mensajes recientes.</p>
+                                </div>
+                            ) : (aiSuggestion.is_expired && !showExpired) ? (
+                                <div className="text-center py-4">
+                                    <p className="text-muted small">Sugerencia pausada por inactividad.</p>
+                                    <button 
+                                        className="btn btn-outline-success btn-sm mt-3"
+                                        onClick={() => setShowExpired(true)}
+                                    >
+                                        Ver última sugerencia
+                                    </button>
                                 </div>
                             ) : (
                                 <>
