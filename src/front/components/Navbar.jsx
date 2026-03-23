@@ -85,8 +85,7 @@ export const Navbar = () => {
 	useEffect(() => {
 		getPatients();
 		fetchNotifications();
-		//Default 30 seg, prevents server API saturation 
-		const interval = setInterval(fetchNotifications, 30000);
+		const interval = setInterval(fetchNotifications, 3000);
 		return () => clearInterval(interval);
 	}, [store.token]);
 
@@ -286,7 +285,7 @@ export const Navbar = () => {
 													{new Date(n.created_at).toLocaleString()}
 												</div>
 											</div>
-											<button 
+											<button
 												className="btn btn-sm btn-link text-muted p-0 position-absolute top-0 end-0 mt-2 me-2"
 												title="Marcar como leída"
 												onClick={(e) => { e.stopPropagation(); markAsRead(n.id); }}
@@ -298,7 +297,7 @@ export const Navbar = () => {
 
 									{notifications.filter(n => n.is_read).length > 0 && notifications.filter(n => !n.is_read).length < 10 && (
 										<>
-											<div className="p-1 px-3 bg-light border-bottom text-muted small fw-bold" style={{fontSize: "0.7rem"}}>
+											<div className="p-1 px-3 bg-light border-bottom text-muted small fw-bold" style={{ fontSize: "0.7rem" }}>
 												ANTERIORES
 											</div>
 											{notifications.filter(n => n.is_read).slice(0, 10 - notifications.filter(n => !n.is_read).length).map(n => (
