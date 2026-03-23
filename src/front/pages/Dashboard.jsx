@@ -275,7 +275,7 @@ export const Dashboard = () => {
                 ))}
             </div>
 
-            <div className="card border-0 shadow-sm rounded-4 p-4">
+            <div className="card border-0 shadow-sm rounded-4 p-4" style={{ overflow: "visible" }}>
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h6 className="fw-bold m-0">
                         <i className="bi bi-list-ul me-2 text-primary"></i>
@@ -288,7 +288,7 @@ export const Dashboard = () => {
                 </div>
 
                 {todayAppointments.length > 0 ? (
-                    <div className="table-responsive">
+                    <div className="table-responsive" style={{ overflow: "visible" }}>
                         <table className="table table-hover align-middle">
                             <thead className="table-light">
                                 <tr>
@@ -358,7 +358,7 @@ export const Dashboard = () => {
                                                     <li>
                                                         <button
                                                             className="dropdown-item small"
-                                                            disabled={appo.status === "cancelled" || appo.status === "confirmed"}
+                                                            disabled={appo.status === "cancelled"}
                                                             onClick={() => navigate(`/edit-appointment/${appo.id}`)}>
                                                             <i className="fa-regular fa-pen-to-square me-2"></i>
                                                             Editar
@@ -367,7 +367,7 @@ export const Dashboard = () => {
                                                     <li>
                                                         <button
                                                             className="dropdown-item small text-danger"
-                                                            disabled={appo.status === "cancelled" || appo.status === "confirmed"}
+                                                            disabled={appo.status === "cancelled"}
                                                             onClick={() => updateStatus(appo.id, "cancelled")}>
                                                             <i className="bi bi-x-circle me-2 text-danger"></i>
                                                             Cancelar turno
