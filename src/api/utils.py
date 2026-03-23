@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 import jwt
 import calendar
 from datetime import datetime
+from api.models import db, Appointment, AISuggestion
 
 class APIException(Exception):
     status_code = 400
@@ -91,3 +92,48 @@ def get_month_date_range(month = None, year = None):
     end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
     
     return start_of_month, end_of_month
+
+
+def check_ai_reschedule_opportunities(cancelled_appo_id):
+    cancelled_appointment = Appointment.query.get(cancelled_appo_id)
+    if not cancelled_appointment:
+        return
+        
+    candidates = Appointment.query.filter(
+        Appointment.procedure_id == cancelled_appointment.procedure_id,
+        Appointment.status.in_(["scheduled", "delayed"]),
+        Appointment.start_date_time > cancelled_appointment.start_date_time
+    ).all()
+    
+    if not candidates:
+        return 
+        
+    candidates_text = "\n".join([f"- ID:{c.id} | Paciente:{c.patient.full_name} | Fecha:{c.start_date_time}" for c in candidates])
+    
+    prompt = f"""
+    Eres el asistente analítico de ProceTurn.
+    Se acaba de cancelar un turno de '{cancelled_appo.procedure.name}' para el {cancelled_appo.start_date_time}.
+    Revisa esta lista de pacientes:
+    {candidates_text}
+    
+    Sugiere a quién adelantar brevemente.
+    """
+    
+    try:
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
+        response = model.generate_content(prompt)
+        
+        if response.text:
+            new_suggestion = AISuggestion(
+                type="reschedule",
+                description=response.text[:255],
+                priority="high",
+                status="pending",
+                appointment_id=cancelled_appo_id
+            )
+            db.session.add(new_suggestion)
+            db.session.commit()
+            
+    except Exception as e:
+        print("Error en IA Trigger:", e)

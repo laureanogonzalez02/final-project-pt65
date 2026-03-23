@@ -266,3 +266,24 @@ class Notification(db.Model):
             "link": link,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+class AISuggestion(db.Model):
+    __tablename__ = "ai_suggestions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    priority: Mapped[str] = mapped_column(String(20), default="normal", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointments.id"), nullable=True)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "description": self.description,
+            "priority": self.priority,
+            "status": self.status,
+            "generated_at": self.generated_at.isoformat() if self.generated_at else None,
+            "appointment_id": self.appointment_id
+        }

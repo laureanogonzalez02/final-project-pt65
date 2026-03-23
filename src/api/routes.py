@@ -1,6 +1,8 @@
 import os
+import requests
+import unicodedata
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure, ProcedureAvailability, Message, Notification
+from api.models import db, User, Appointment, BlockedSlot, Patient, Specialty, Procedure, ProcedureAvailability, Message, Notification, AISuggestion
 from api.utils import generate_sitemap, APIException, generate_reset_token, verify_reset_token, get_month_date_range
 from flask_mail import Message as mail_message
 from flask_cors import CORS
@@ -11,7 +13,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from twilio.rest import Client
 import google.generativeai as genai
 import json as json_lib
-import unicodedata
+
 
 api = Blueprint('api', __name__)
 pending_resets = []
@@ -1131,47 +1133,10 @@ def get_ai_chat_suggestion():
 
     return jsonify({"detected_procedure": detected_entity, "available_slots": available_slots, "is_expired": is_expired}), 200
 
-#IA assistant unique back request, 30 days disponibility. Gemini direct with front
-@api.route('/procedure-capacity/bulk', methods=['POST'])
+@api.route('/ai/dashboard-suggestions', methods=['GET'])
 @jwt_required()
-def get_bulk_procedure_capacity():
-    body = request.get_json()
-    days_ahead = body.get("days_ahead", 7)
+def get_dashboard_ai_suggestions():
 
-    today = datetime.now().date()
-    all_procedures = Procedure.query.all()
-    results = {}
-
-    for i in range(days_ahead):
-        check_date = today + timedelta(days=i)
-        day_of_week = check_date.weekday()
-        date_str = check_date.isoformat()
-
-        for proc in all_procedures:
-            slots = ProcedureAvailability.query.filter_by(
-                procedure_id=proc.id,
-                day_of_week=day_of_week
-            ).all()
-
-            for slot in slots:
-                start_dt = datetime.combine(check_date, slot.start_time)
-                booked = Appointment.query.filter(
-                    Appointment.procedure_id == proc.id,
-                    Appointment.start_date_time == start_dt,
-                    Appointment.status != "cancelled"
-                ).count()
-
-                if booked < slot.capacity:
-                    if date_str not in results:
-                        results[date_str] = []
-                    results[date_str].append({
-                        "procedure": proc.name,
-                        "procedure_id": proc.id,
-                        "specialty": proc.specialty.name if proc.specialty else None,
-                        "specialty_id": proc.specialty_id,
-                        "time": slot.start_time.strftime("%H:%M"),
-                        "end_time": slot.end_time.strftime("%H:%M"),
-                        "available": slot.capacity - booked
-                    })
-
-    return jsonify(results), 200
+    sugerencias = AISuggestion.query.filter_by(status='pending').order_by(AISuggestion.generated_at.desc()).all()
+    
+    return jsonify([s.serialize() for s in sugerencias]), 200
