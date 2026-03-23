@@ -41,6 +41,7 @@ export const Sidebar = () => {
     const { store, dispatch } = useContext(StoreContext);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownMenuRef = useRef(null);
+    const [unreadMsgCount, setUnreadMsgCount] = useState(0);
     const capitalizeName = (name) => {
         if (!name) return "Usuario";
         return name
@@ -56,6 +57,24 @@ export const Sidebar = () => {
         });
         window.location.href = "/login";
     };
+    useEffect(() => {
+        const fetchUnreadMessages = async () => {
+            if (!store.token) return;
+            try {
+                const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/messages/unread-count`, {
+                    headers: { "Authorization": `Bearer ${store.token}` }
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    setUnreadMsgCount(data.count);
+                }
+            } catch (err) { console.error("Error fetching unread count:", err); }
+        };
+        fetchUnreadMessages();
+        const interval = setInterval(fetchUnreadMessages, 3000);
+        return () => clearInterval(interval);
+    }, [store.token]);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownMenuRef.current && !dropdownMenuRef.current.contains(event.target)) {
@@ -93,7 +112,24 @@ export const Sidebar = () => {
                         <h1> Pacientes </h1>
                     </NavLink>
                     <NavLink to="/chat" className="sidebar-nav-item">
-                        <h1> Mensajes </h1>
+                        <h1 className="d-flex align-items-center justify-content-between w-100">
+                            <span> Mensajes </span>
+                            {unreadMsgCount > 0 && (
+                                <span style={{
+                                    background: "#e74c3c",
+                                    color: "white",
+                                    borderRadius: "50px",
+                                    fontSize: "0.65rem",
+                                    fontWeight: "bold",
+                                    padding: "2px 7px",
+                                    minWidth: 20,
+                                    textAlign: "center",
+                                    lineHeight: "1.4"
+                                }}>
+                                    {unreadMsgCount > 30 ? "+30" : unreadMsgCount}
+                                </span>
+                            )}
+                        </h1>
                     </NavLink>
                     <NavLink to="/staff" className="sidebar-nav-item">
                         <h1> Personal </h1>

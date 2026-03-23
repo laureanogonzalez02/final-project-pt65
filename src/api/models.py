@@ -250,8 +250,13 @@ class Notification(db.Model):
 
     def serialize(self):
         link = None
-        if "recuperación" in self.message.lower():
-            link = "/" 
+        msg = self.message.lower()
+        if "recuperación" in msg:
+            link = "/"
+        elif "whatsapp" in msg or "mensaje" in msg:
+            link = "/messages"
+        elif "turno" in msg:
+            link = "/calendar"
 
         return {
             "id": self.id,

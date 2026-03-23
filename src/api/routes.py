@@ -638,6 +638,13 @@ def send_message():
     return jsonify(new_message.serialize()), 201
 
 
+@api.route("/messages/unread-count", methods=["GET"])
+@jwt_required()
+def get_unread_message_count():
+    count = Message.query.filter_by(direction="incoming", read=False).count()
+    return jsonify({"count": count}), 200
+
+
 @api.route("/messages/<int:patient_id>", methods=["GET"])
 @jwt_required()
 def get_messages(patient_id):
