@@ -272,7 +272,8 @@ export const Calendar = () => {
                                                 className="btn btn-sm btn-dark rounded-3 px-2"
                                                 onClick={() => {
                                                     const formattedDate = `${currentYear}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDayNumber).padStart(2, '0')}`;
-                                                    navigate(`/new-appointment?date=${formattedDate}`);
+                                                    const specialtyParam = selectedSpecialty ? `&specialty_id=${selectedSpecialty}` : "";
+                                                    navigate(`/new-appointment?date=${formattedDate}${specialtyParam}`);
                                                 }}>
                                                 + Nuevo turno
                                             </button>
