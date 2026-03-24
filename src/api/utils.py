@@ -112,11 +112,11 @@ def check_ai_reschedule_opportunities(cancelled_appo_id):
     
     prompt = f"""
     Eres el asistente analítico de ProceTurn.
-    Se acaba de cancelar un turno de '{cancelled_appo.procedure.name}' para el {cancelled_appo.start_date_time}.
-    Revisa esta lista de pacientes:
+    Se acaba de cancelar un turno de '{cancelled_appointment.procedure.name}' para el {cancelled_appointment.start_date_time}.
+    Revisa esta lista de pacientes con turnos posteriores para el mismo procedimiento:
     {candidates_text}
     
-    Sugiere a quién adelantar brevemente.
+    Sugiere brevemente a quién se podría adelantar el turno y por qué, en una sola oración.
     """
     
     try:
