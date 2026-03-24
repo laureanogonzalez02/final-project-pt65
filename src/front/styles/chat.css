@@ -1,0 +1,119 @@
+.cs-main-container {
+  border: none !important;
+  background-color: #ffffff !important;
+}
+
+.cs-sidebar {
+  background-color: #ffffff !important;
+  border-right: 1px solid #f0f0f0 !important;
+}
+
+.cs-search {
+  background-color: #f4f7f6 !important;
+  border: none !important;
+}
+
+.cs-search__input {
+  background-color: #f4f7f6 !important;
+  color: #1a1a1a !important;
+}
+
+.cs-search__input::placeholder {
+  color: #aaaaaa !important;
+}
+
+.cs-conversation {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.cs-conversation:hover {
+  background-color: #f4f7f6 !important;
+}
+
+.cs-conversation.cs-conversation--active,
+.cs-conversation--active {
+  background-color: #f4f7f6 !important;
+  border-right: 4px solid #3a9e6e !important;
+}
+
+.cs-conversation__name {
+  color: #1a1a1a !important;
+  font-weight: 600 !important;
+}
+
+.cs-conversation__info,
+.cs-conversation__last-sender {
+  color: #888888 !important;
+}
+
+.cs-conversation__unread-dot,
+.cs-conversation__badge {
+  background-color: #3a9e6e !important;
+}
+
+.cs-conversation-header {
+  background-color: #f4f7f6 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.cs-conversation-header__user-name {
+  color: #1a1a1a !important;
+  font-weight: 700 !important;
+}
+
+.cs-conversation-header__info {
+  color: #888888 !important;
+}
+
+.cs-conversation-header__back {
+  color: #3a9e6e !important;
+}
+
+.cs-conversation-header__back:hover {
+  color: #2e7d5a !important;
+}
+
+.cs-message-list {
+  background-color: #f3f4f6 !important;
+}
+
+.cs-message--incoming .cs-message__content {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+  border: 1px solid #e8ede9 !important;
+  border-radius: 12px 12px 12px 0 !important;
+}
+
+.cs-message--outgoing .cs-message__content {
+  background-color: #3a9e6e !important;
+  color: #ffffff !important;
+  border-radius: 12px 12px 0 12px !important;
+}
+
+.cs-message-input {
+  background-color: #ffffff !important;
+  border-top: 1px solid #f0f0f0 !important;
+}
+
+.cs-message-input__content-editor-wrapper,
+.cs-message-input__content-editor {
+  background-color: #f4f7f6 !important;
+  color: #1a1a1a !important;
+}
+
+.cs-message-input__content-editor[data-placeholder]::before {
+  color: #aaaaaa !important;
+}
+.cs-button--send {
+  color: #3a9e6e !important;
+}
+
+.cs-button--send:hover {
+  color: #2e7d5a !important;
+}
+
+.cs-chat-container {
+  background-color: #f3f4f6 !important;
+}

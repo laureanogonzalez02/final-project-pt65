@@ -1,0 +1,74 @@
+.new-appointment-wrapper {
+    min-height: calc(100vh - 70px);
+    background-color: #f0f2f5;
+}
+
+.patient-panel {
+    width: 320px;
+    max-height: calc(100vh - 110px);
+    border-radius: 16px;
+}
+
+.patient-item {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.patient-item.selected {
+    background-color: rgba(46, 204, 113, 0.15);
+}
+
+.patient-item:hover:not(.selected) {
+    background-color: #eef0f2;
+}
+
+.patient-avatar {
+    width: 42px;
+    height: 42px;
+    background-color: #2ECC71;
+}
+
+.patient-avatar-lg {
+    width: 48px;
+    height: 48px;
+    background-color: #c7d2fe;
+}
+
+.patient-info-box {
+    background-color: #eef2ff;
+}
+
+.patient-placeholder {
+    border-style: dashed !important;
+}
+
+.patient-dni-text {
+    font-size: 0.72rem;
+}
+
+.form-column {
+    height: calc(100vh - 70px);
+}
+
+.form-column-inner {
+    max-width: 750px;
+}
+
+.slot-full {
+    background-color: #ca4949 !important;
+    border-color: #E57373 !important;
+    color: white !important;
+}
+
+.slot-capacity {
+    font-size: 0.6rem;
+}
+
+.btn-save-appointment {
+    background-color: #2ECC71 !important;
+    border: none !important;
+}
+
+.btn-save-appointment:hover {
+    background-color: #27ae60 !important;
+}

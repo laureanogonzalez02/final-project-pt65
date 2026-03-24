@@ -19,21 +19,6 @@ const svgProfile =
         <path d="M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0" />
         <path d="M9 10a3 3 0 1 0 6 0 3 3 0 1 0-6 0M6.168 18.849A4 4 0 0 1 10 16h4a4 4 0 0 1 3.834 2.855" />
     </svg>
-const svgSettings =
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={24}
-        height={24}
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        className="icon icon-tabler icons-tabler-outline icon-tabler-adjustments"
-    >
-        <path stroke="none" d="M0 0h24v24H0z" />
-        <path d="M4 10a2 2 0 1 0 4 0 2 2 0 0 0-4 0M6 4v4M6 12v8M10 16a2 2 0 1 0 4 0 2 2 0 0 0-4 0M12 4v10M12 18v2M16 7a2 2 0 1 0 4 0 2 2 0 0 0-4 0M18 4v1M18 9v11" />
-    </svg>
 const svgLogout =
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -56,6 +41,7 @@ export const Sidebar = () => {
     const { store, dispatch } = useContext(StoreContext);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownMenuRef = useRef(null);
+    const [unreadMsgCount, setUnreadMsgCount] = useState(0);
     const capitalizeName = (name) => {
         if (!name) return "Usuario";
         return name
@@ -67,33 +53,53 @@ export const Sidebar = () => {
     const handleLogout = () => {
         dispatch({
             type: "logout",
-            payloasd: null
+            payload: null
         });
         window.location.href = "/login";
     };
+    useEffect(() => {
+        const fetchUnreadMessages = async () => {
+            if (!store.token) return;
+            try {
+                const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/messages/unread-count`, {
+                    headers: { "Authorization": `Bearer ${store.token}` }
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    setUnreadMsgCount(data.count);
+                }
+            } catch (err) { console.error("Error fetching unread count:", err); }
+        };
+        fetchUnreadMessages();
+        const interval = setInterval(fetchUnreadMessages, 3000);
+        return () => clearInterval(interval);
+    }, [store.token]);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownMenuRef.current && !dropdownMenuRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         };
-        if (setIsOpen) {
+        if (isOpen) {
             document.addEventListener("mousedown", handleClickOutside);
         }
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, []);
+    }, [isOpen]);
 
 
     return (
         <>
             <aside className="sidebar">
                 <div className="sidebar-header">
-                    <div className="logo-icon">
-                        <i className="bi bi-calendar-check" style={{ fontSize: "0.9rem" }}></i>
-                    </div>
-                    <span className="logo-text">ProceTurn</span>
+                    <NavLink to="/" className="sidebar-header-link">
+                        <div className="logo-icon">
+                            <i className="bi bi-calendar-check" style={{ fontSize: "0.9rem" }}></i>
+                        </div>
+                        <span className="logo-text">ProceTurn</span>
+                    </NavLink>
                 </div>
                 <nav className="sidebar-nav">
                     <NavLink to="/" className="sidebar-nav-item">
@@ -105,8 +111,25 @@ export const Sidebar = () => {
                     <NavLink to="/patients" className="sidebar-nav-item">
                         <h1> Pacientes </h1>
                     </NavLink>
-                    <NavLink to="/messages" className="sidebar-nav-item">
-                        <h1> Mensajes </h1>
+                    <NavLink to="/chat" className="sidebar-nav-item">
+                        <h1 className="d-flex align-items-center justify-content-between w-100">
+                            <span> Mensajes </span>
+                            {unreadMsgCount > 0 && (
+                                <span style={{
+                                    background: "#e74c3c",
+                                    color: "white",
+                                    borderRadius: "50px",
+                                    fontSize: "0.65rem",
+                                    fontWeight: "bold",
+                                    padding: "2px 7px",
+                                    minWidth: 20,
+                                    textAlign: "center",
+                                    lineHeight: "1.4"
+                                }}>
+                                    {unreadMsgCount > 30 ? "+30" : unreadMsgCount}
+                                </span>
+                            )}
+                        </h1>
                     </NavLink>
                     <NavLink to="/staff" className="sidebar-nav-item">
                         <h1> Personal </h1>
@@ -116,8 +139,7 @@ export const Sidebar = () => {
                     {isOpen && (
                         <div className="dropdown-menu-up" ref={dropdownMenuRef}>
                             <ul>
-                                <li> {svgProfile} Ver Perfil</li>
-                                <li> {svgSettings} Opciones</li>
+                                <li onClick={() => { setIsOpen(false); window.location.href = "/staff"; }}> {svgProfile} Ver Perfil</li>
                                 <li className="logout" data-bs-target="#confirmEditModalSession" data-bs-toggle="modal">
                                     {svgLogout} Cerrar Sesión
                                 </li>

@@ -51,6 +51,9 @@ class Patient(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True, nullable=False)
+    last_ai_message_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    ai_detected_procedure_id: Mapped[int] = mapped_column(ForeignKey("procedures.id"), nullable=True)
+    ai_detected_specialty_id: Mapped[int] = mapped_column(ForeignKey("specialties.id"), nullable=True)
 
     def serialize(self):
         return {
@@ -64,7 +67,10 @@ class Patient(db.Model):
             "address": self.address,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "is_active": self.is_active
+            "is_active": self.is_active,
+            "last_ai_message_id": self.last_ai_message_id,
+            "ai_detected_procedure_id": self.ai_detected_procedure_id,
+            "ai_detected_specialty_id": self.ai_detected_specialty_id
         }
 
 
@@ -203,3 +209,94 @@ class BlockedSlot(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat()
         }
+
+class Message(db.Model):
+    __tablename__ = "messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    direction: Mapped[str] = mapped_column(String(20), nullable=False)
+    twilio_sid: Mapped[str] = mapped_column(String(50), nullable=True, unique=True)
+    read: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    patient = relationship("Patient")
+    user = relationship("User")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "patient_name": self.patient.full_name if self.patient else None,
+            "user_id": self.user_id,
+            "sender_name": self.user.full_name if self.user else self.patient.full_name,
+            "body": self.body,
+            "direction": self.direction,
+            "twilio_sid": self.twilio_sid,
+            "read": self.read,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
+
+    def serialize(self):
+        link = None
+        msg = self.message.lower()
+        if "recuperación" in msg:
+            link = "/"
+        elif "whatsapp" in msg or "mensaje" in msg:
+            link = "/chat"
+        elif "turno" in msg:
+            link = "/calendar"
+
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "message": self.message,
+            "is_read": self.is_read,
+            "link": link,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+class AISuggestion(db.Model):
+    __tablename__ = "ai_suggestions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    priority: Mapped[str] = mapped_column(String(20), default="normal", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointments.id"), nullable=True)
+    suggested_patient_dni: Mapped[str] = mapped_column(String(20), nullable=True)
+
+    appointment = relationship("Appointment")
+
+    def serialize(self):
+        data = {
+            "id": self.id,
+            "type": self.type,
+            "description": self.description,
+            "priority": self.priority,
+            "status": self.status,
+            "generated_at": self.generated_at.isoformat() if self.generated_at else None,
+            "appointment_id": self.appointment_id,
+            "suggested_patient_dni": self.suggested_patient_dni
+        }
+        
+        if self.appointment_id and self.appointment:
+            data["prefill_data"] = {
+                "date": self.appointment.start_date_time.strftime("%Y-%m-%d"),
+                "procedure_id": self.appointment.procedure_id,
+                "specialty_id": self.appointment.procedure.specialty_id
+            }
+            
+        return data

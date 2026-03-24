@@ -16,6 +16,20 @@
   gap: 12px;
 }
 
+.sidebar-header-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sidebar-header-link:hover .logo-text {
+  color: #2ecc71;
+  transition: color 0.2s ease;
+}
+
 .logo-icon {
   width: 28px;
   height: 28px;

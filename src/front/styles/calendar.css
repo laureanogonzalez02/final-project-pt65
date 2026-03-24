@@ -85,44 +85,24 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.low-availability .dot,
-.medium-availability .dot {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
 .status-confirmed {
   background-color: #2ecc71;
 }
+
 .status-scheduled {
-  background-color: #f1c40f;
+  background-color: #f39c12;
 }
+
 .status-cancelled {
   background-color: #e74c3c;
 }
 
-.section-title {
-  font-weight: 800;
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+.status-delayed {
+  background-color: #343a40;
 }
 
-.section-title.urgent {
-  background-color: #fff5f5 !important;
-  color: #c92a2a !important;
-}
-
-.section-title.routine {
-  background-color: #ebfbee !important;
-  color: #2b8a3e !important;
-}
-
-.avatar-circle {
-  width: 34px;
-  height: 34px;
-  background-color: #f1f3f5;
-  border-radius: 50%;
-  border: 1px solid #e9ecef;
+.status-postponed {
+  background-color: #0dcaf0;
 }
 
 .btn-dark {
@@ -137,15 +117,22 @@
   border-radius: 4px;
 }
 
-.legend-box.high {
+.legend-box.day-available {
   background-color: #198754;
 }
-.legend-box.medium {
+
+.legend-box.day-partial {
   background-color: #d1e7dd;
   border: 1px solid #198754;
 }
-.legend-box.low {
-  background-color: #f3f4f6;
+
+.legend-box.day-full {
+  background-color: #e9ecef;
+  border: 1px solid #adb5bd;
+}
+
+.legend-box.day-blocked {
+  background-color: #dc3545;
 }
 
 .appo-count-badge {
@@ -160,6 +147,7 @@
 .x-small {
   font-size: 0.8rem;
 }
+
 .extra-small {
   font-size: 0.7rem;
   font-weight: 500;

@@ -30,6 +30,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
+  z-index: 99999;
 }
 
 .search-box input {
@@ -52,18 +54,18 @@
 .navbar-calendar {
   height: 70px;
   position: fixed;
-  width: calc(100% - 260px); 
-  background-color: #cf9999; 
+  width: calc(100% - 260px);
+  background-color: #cf9999;
   border-bottom: 1px solid #616161;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  z-index: 1000; 
+  z-index: 1000;
 }
 
 .nav-title-calendar {
-  font-size: 1.1rem; 
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
@@ -78,7 +80,7 @@
 .search-box-calendar {
   background: #f1f3f4;
   padding: 6px 18px;
-  border-radius: 50px; 
+  border-radius: 50px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -109,7 +111,7 @@
   right: 0;
   width: 8px;
   height: 8px;
-  background-color: #fa5252; 
+  background-color: #fa5252;
   border: 2px solid white;
   border-radius: 50%;
 }
@@ -133,38 +135,60 @@
 }
 
 .search-box-pill {
-    background-color: #f0f0f0; 
-    border: 1px solid #e9ecef;
-    border-radius: 50px;       
-    width: 350px;              
-    display: flex;
-    align-items: center;
-    transition: all 0.2s ease;
+  background-color: #f0f0f0;
+  border: 1px solid #e9ecef;
+  border-radius: 50px;
+  width: 350px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
 }
 
 .search-box-pill:focus-within {
-    background-color: #ffffff;
-    border-color: #000000;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+  background-color: #ffffff;
+  border-color: #000000;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
 }
 
 .search-box-pill i {
-    color: #adb5bd; 
-    display: flex;
-    align-items: center;
+  color: #adb5bd;
+  display: flex;
+  align-items: center;
 }
 
 .search-input-clean {
-    border: none;
-    background: transparent;
-    outline: none;       
-    width: 100%;
-    font-size: 0.85rem;
-    padding: 6px 0;    
-    color: #212529;
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 6px 0;
+  color: #212529;
 }
 
 .search-input-clean::placeholder {
-    color: #adb5bd;
-    font-size: 0.85rem;
+  color: #adb5bd;
+  font-size: 0.85rem;
+}
+
+.modal-filter-patient {
+  position: fixed;
+  top: 100px; 
+  right: 0; 
+  width: 100px; 
+  min-width: 320px; 
+  background-color: white;
+  z-index: 1000000;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); 
+  border: 1px solid #eee;
+  overflow: hidden; 
+}
+
+.search-result-item {
+  transition: background 0.2s ease;
+}
+
+.search-result-item:hover {
+  background-color: #f8f9fa;
 }
