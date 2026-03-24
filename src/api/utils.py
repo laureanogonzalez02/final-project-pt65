@@ -1,8 +1,10 @@
 from flask import jsonify, url_for, current_app
 from datetime import datetime, timezone, timedelta
 import jwt
+import os
 import calendar
 from datetime import datetime
+import google.generativeai as genai
 from api.models import db, Appointment, AISuggestion
 
 class APIException(Exception):
@@ -95,9 +97,13 @@ def get_month_date_range(month = None, year = None):
 
 
 def check_ai_reschedule_opportunities(cancelled_appo_id):
+    print(f"[AI TRIGGER] Iniciando para appointment_id={cancelled_appo_id}")
     cancelled_appointment = Appointment.query.get(cancelled_appo_id)
     if not cancelled_appointment:
+        print("[AI TRIGGER] No se encontro el appointment cancelado")
         return
+    
+    print(f"[AI TRIGGER] Appointment encontrado: procedure_id={cancelled_appointment.procedure_id}, fecha={cancelled_appointment.start_date_time}")
         
     candidates = Appointment.query.filter(
         Appointment.procedure_id == cancelled_appointment.procedure_id,
@@ -105,35 +111,66 @@ def check_ai_reschedule_opportunities(cancelled_appo_id):
         Appointment.start_date_time > cancelled_appointment.start_date_time
     ).all()
     
+    print(f"[AI TRIGGER] Candidatos encontrados: {len(candidates)}")
+    
     if not candidates:
+        print("[AI TRIGGER] No hay candidatos, saliendo")
         return 
         
-    candidates_text = "\n".join([f"- ID:{c.id} | Paciente:{c.patient.full_name} | Fecha:{c.start_date_time}" for c in candidates])
+    candidates_text = "\n".join([f"- DNI:{c.patient.dni} | Paciente:{c.patient.full_name} | Fecha:{c.start_date_time.strftime('%d/%m/%Y a las %H:%M')}" for c in candidates])
     
     prompt = f"""
     Eres el asistente analítico de ProceTurn.
-    Se acaba de cancelar un turno de '{cancelled_appointment.procedure.name}' para el {cancelled_appointment.start_date_time}.
+    Se acaba de cancelar un turno de '{cancelled_appointment.procedure.name}' para el {cancelled_appointment.start_date_time.strftime('%d/%m/%Y a las %H:%M')}.
     Revisa esta lista de pacientes con turnos posteriores para el mismo procedimiento:
     {candidates_text}
     
-    Sugiere brevemente a quién se podría adelantar el turno y por qué, en una sola oración.
+    Analiza la sugerencia de adelantar el turno de uno de los pacientes para optimizar la agenda.
+    IMPORTANTE: 
+    - Escribe las fechas en formato DD/MM/AAAA y la hora en formato HH:MM (sin segundos).
+    - NO incluyas el DNI ni el ID del paciente en el texto del mensaje sugerido.
+    - Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta y sin fencings markdown:
+    {{
+      "mensaje": "Descripción breve de la sugerencia (máx 200 caracteres)",
+      "dni_sugerido": "DNI del paciente elegido"
+    }}
     """
+    
+    print(f"[AI TRIGGER] Enviando prompt a Gemini...")
     
     try:
         genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
         model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
         response = model.generate_content(prompt)
         
+        print(f"[AI TRIGGER] Respuesta recibida: {response.text[:100] if response.text else 'VACIA'}")
+        
         if response.text:
-            new_suggestion = AISuggestion(
-                type="reschedule",
-                description=response.text[:255],
-                priority="high",
-                status="pending",
-                appointment_id=cancelled_appo_id
-            )
-            db.session.add(new_suggestion)
-            db.session.commit()
+            import json
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+            
+            try:
+                data = json.loads(raw_text.strip())
+            except json.JSONDecodeError:
+                print("[AI TRIGGER] Error parseando JSON de Gemini. Respuesta cruda:", raw_text)
+                return
+                
+            if "mensaje" in data:
+                new_suggestion = AISuggestion(
+                    type="reschedule",
+                    description=data["mensaje"][:255],
+                    priority="high",
+                    status="pending",
+                    appointment_id=cancelled_appo_id,
+                    suggested_patient_dni=data.get("dni_sugerido")
+                )
+                db.session.add(new_suggestion)
+                db.session.commit()
+                print(f"[AI TRIGGER] Sugerencia estructurada guardada exitosamente!")
             
     except Exception as e:
-        print("Error en IA Trigger:", e)
+        print(f"[AI TRIGGER] ERROR: {type(e).__name__}: {e}")

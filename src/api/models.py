@@ -276,14 +276,27 @@ class AISuggestion(db.Model):
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     appointment_id: Mapped[int] = mapped_column(ForeignKey("appointments.id"), nullable=True)
+    suggested_patient_dni: Mapped[str] = mapped_column(String(20), nullable=True)
+
+    appointment = relationship("Appointment")
 
     def serialize(self):
-        return {
+        data = {
             "id": self.id,
             "type": self.type,
             "description": self.description,
             "priority": self.priority,
             "status": self.status,
             "generated_at": self.generated_at.isoformat() if self.generated_at else None,
-            "appointment_id": self.appointment_id
+            "appointment_id": self.appointment_id,
+            "suggested_patient_dni": self.suggested_patient_dni
         }
+        
+        if self.appointment_id and self.appointment:
+            data["prefill_data"] = {
+                "date": self.appointment.start_date_time.strftime("%Y-%m-%d"),
+                "procedure_id": self.appointment.procedure_id,
+                "specialty_id": self.appointment.procedure.specialty_id
+            }
+            
+        return data

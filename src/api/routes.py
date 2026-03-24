@@ -1147,3 +1147,15 @@ def get_dashboard_ai_suggestions():
     sugerencias = AISuggestion.query.filter_by(status='pending').order_by(AISuggestion.generated_at.desc()).all()
     
     return jsonify([s.serialize() for s in sugerencias]), 200
+
+@api.route('/ai/dashboard-suggestions/<int:id>/dismiss', methods=['PUT'])
+@jwt_required()
+def dismiss_ai_suggestion(id):
+    suggestion = AISuggestion.query.get(id)
+    if not suggestion:
+        return jsonify({"msg": "Sugerencia no encontrada"}), 404
+        
+    suggestion.status = 'dismissed'
+    db.session.commit()
+    
+    return jsonify({"msg": "Sugerencia descartada"}), 200

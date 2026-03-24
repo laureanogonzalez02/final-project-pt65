@@ -259,7 +259,7 @@ export const Calendar = () => {
 
                 <div className={`row g-4 justify-content-center ${expandedPanel ? "flex-column" : ""}`}>
                     <div className={selectedDayNumber ? (expandedPanel ? "col-12" : "col-lg-4") : "d-none"}>
-                        <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+                        <div className="card border-0 shadow-sm rounded-4 p-4 h-100 d-flex flex-column" style={{ maxHeight: expandedPanel ? "none" : "calc(100vh - 120px)" }}>
                             {selectedDayNumber ? (
                                 <>
                                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -300,7 +300,7 @@ export const Calendar = () => {
                                         </div>
                                     )}
 
-                                    <div style={{ overflowY: "auto", maxHeight: expandedPanel ? "70vh" : "500px" }}>
+                                    <div className="flex-grow-1 overflow-auto pe-2" style={{ minHeight: "0", paddingBottom: "20px" }}>
                                         {selectedDayAppointments.length > 0 ? (
                                             selectedDayAppointments.map(appo => (
                                                 <div key={appo.id} className="border rounded-3 p-3 mb-2 bg-white shadow-sm">
@@ -341,7 +341,8 @@ export const Calendar = () => {
                                                                 <div className="dropdown" style={{ marginTop: "10px" }}>
                                                                     <button className="btn btn-outline-dark btn-sm rounded-3 px-2 dropdown-toggle"
                                                                         style={{ fontSize: "0.8rem" }}
-                                                                        data-bs-toggle="dropdown">
+                                                                        data-bs-toggle="dropdown"
+                                                                        data-bs-popper-config='{"strategy":"fixed"}'>
                                                                         Acciones
                                                                     </button>
                                                                     <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">

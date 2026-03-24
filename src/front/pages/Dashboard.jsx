@@ -213,6 +213,18 @@ export const Dashboard = () => {
         } catch (err) { console.error("Error cargando sugerencias de IA:", err); }
     };
 
+    const handleDismissSuggestion = async (id) => {
+        try {
+            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/ai/dashboard-suggestions/${id}/dismiss`, {
+                method: "PUT",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (resp.ok) {
+                setAiSuggestions(prev => prev.filter(s => s.id !== id));
+            }
+        } catch (err) { console.error("Error al descartar sugerencia:", err); }
+    };
+
     return (
         <div className="p-4 d-flex" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", gap: "1.5rem" }}>
             {/* Contenido Principal Izquierdo */}
@@ -412,20 +424,28 @@ export const Dashboard = () => {
             </div>
 
             {/* Panel Derecho Fijo de IA */}
-            <div className="card border-0 shadow-sm rounded-4" style={{ width: "320px", height: "fit-content", flexShrink: 0, backgroundColor: "#fff" }}>
-                <div className="p-3">
-                    <h6 className="fw-bold mb-3 d-flex align-items-center gap-2">
+            <div className="card border-0 shadow-sm rounded-4 d-flex flex-column" style={{ width: "320px", height: "calc(100vh - 50px)", flexShrink: 0, backgroundColor: "#fff" }}>
+                <div className="p-3 border-bottom flex-shrink-0">
+                    <h6 className="fw-bold mb-0 d-flex align-items-center gap-2">
                         <i className="bi bi-stars text-success"></i>
                         Sugerencias de IA
                     </h6>
+                </div>
+                <div className="p-3 flex-grow-1 overflow-auto">
                     {aiSuggestions.length === 0 ? (
                         <div className="text-center py-4 text-muted small">
                             No hay sugerencias en este momento.
                         </div>
                     ) : (
                         aiSuggestions.map((sug) => (
-                            <div key={sug.id} className="border rounded-3 p-3 mb-3" style={{ backgroundColor: "#f9fcf8", borderLeft: "4px solid #198754" }}>
-                                <div className="d-flex align-items-center gap-2 mb-2 text-success fw-bold small">
+                            <div key={sug.id} className="border rounded-3 p-3 mb-3 position-relative" style={{ backgroundColor: "#f9fcf8", borderLeft: "4px solid #198754" }}>
+                                <button
+                                    onClick={() => handleDismissSuggestion(sug.id)}
+                                    className="btn-close position-absolute top-0 end-0 m-2 shadow-none"
+                                    style={{ fontSize: "0.6rem" }}
+                                    aria-label="Cerrar"
+                                ></button>
+                                <div className="d-flex align-items-center gap-2 mb-2 text-success fw-bold small pe-3">
                                     <i className="bi bi-robot"></i>
                                     Alerta ProceTurn AI
                                 </div>
@@ -435,6 +455,15 @@ export const Dashboard = () => {
                                 <div className="text-muted mt-2" style={{ fontSize: "0.65rem" }}>
                                     Hace un momento
                                 </div>
+                                {sug.suggested_patient_dni && sug.prefill_data && (
+                                    <button 
+                                        className="btn btn-sm btn-success w-100 mt-3 rounded-pill fw-bold shadow-sm"
+                                        style={{ fontSize: "0.8rem" }}
+                                        onClick={() => navigate(`/new-appointment?date=${sug.prefill_data.date}&dni=${sug.suggested_patient_dni}&procedure_id=${sug.prefill_data.procedure_id}&specialty_id=${sug.prefill_data.specialty_id}`)}>
+                                        <i className="bi bi-calendar-plus me-2"></i>
+                                        Reasignar Turno
+                                    </button>
+                                )}
                             </div>
                         ))
                     )}
