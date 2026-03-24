@@ -60,6 +60,9 @@ def signup():
     existing_dni = User.query.filter_by(dni=dni).first()
     if existing_dni:
         return jsonify({"msg": "DNI already exists"}), 409
+    existing_phone = User.query.filter_by(phone=phone).first()
+    if existing_phone:
+        return jsonify({"msg": "Phone number already exists"}), 409
 
 
     new_user = User(email=email,

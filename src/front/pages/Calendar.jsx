@@ -12,8 +12,8 @@ export const Calendar = () => {
 
     const [expandedPanel, setExpandedPanel] = useState(false);
 
-    const { procedures } = useMedicalData();
-    const [selectedProcedure, setSelectedProcedure] = useState("");
+    const { specialties } = useMedicalData();
+    const [selectedSpecialty, setSelectedSpecialty] = useState("");
 
     const [selectedDayNumber, setSelectedDayNumber] = useState(new Date().getDate());
 
@@ -67,9 +67,9 @@ export const Calendar = () => {
     }, [viewDate]);
 
     const filteredAppos = useMemo(() => {
-        if (!selectedProcedure) return store.appointments || [];
-        return store.appointments.filter(appo => appo.procedure_id === parseInt(selectedProcedure));
-    }, [store.appointments, selectedProcedure]);
+        if (!selectedSpecialty) return store.appointments || [];
+        return store.appointments.filter(appo => appo.specialty_id === parseInt(selectedSpecialty));
+    }, [store.appointments, selectedSpecialty]);
 
     const selectedDayAppointments = useMemo(() => {
         if (!selectedDayNumber) return [];
@@ -224,28 +224,28 @@ export const Calendar = () => {
                         <div className="col-md-4">
                             <select
                                 className="form-select form-select-sm border-light bg-light"
-                                value={selectedProcedure}
-                                onChange={(e) => setSelectedProcedure(e.target.value)}
+                                value={selectedSpecialty}
+                                onChange={(e) => setSelectedSpecialty(e.target.value)}
                             >
-                                <option value="">Todos los procedimientos</option>
-                                {procedures.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                <option value="">Todas las especialidades</option>
+                                {specialties.map(s => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="col-md-auto">
-                            {selectedProcedure && (
-                                <button className="btn btn-sm btn-outline-danger rounded-pill px-3" onClick={() => setSelectedProcedure("")}>
+                            {selectedSpecialty && (
+                                <button className="btn btn-sm btn-outline-danger rounded-pill px-3" onClick={() => setSelectedSpecialty("")}>
                                     Limpiar Filtros
                                 </button>
                             )}
                         </div>
                         <div className="col text-end d-flex align-items-center justify-content-end gap-2">
-                            {selectedProcedure ? (
+                            {selectedSpecialty ? (
                                 <>
                                     <i className="bi bi-funnel-fill text-primary"></i>
                                     <span className="badge bg-primary rounded-pill px-3 py-2">
-                                        Filtrando: {procedures.find(p => p.id == selectedProcedure)?.name}
+                                        Filtrando: {specialties.find(s => s.id == selectedSpecialty)?.name}
                                     </span>
                                 </>
                             ) : (
@@ -290,11 +290,11 @@ export const Calendar = () => {
                                         </div>
                                     </div>
 
-                                    {selectedProcedure && (
+                                    {selectedSpecialty && (
                                         <div className="mb-3">
                                             <span className="badge bg-primary rounded-pill px-3 py-1 extra-small">
                                                 <i className="bi bi-funnel-fill me-1"></i>
-                                                Filtrando: {procedures.find(p => p.id == selectedProcedure)?.name}
+                                                Filtrando: {specialties.find(s => s.id == selectedSpecialty)?.name}
                                             </span>
                                         </div>
                                     )}
@@ -320,21 +320,61 @@ export const Calendar = () => {
                                                                 {appo.specialty_name} — {appo.procedure_name}
                                                             </p>
                                                         </div>
-                                                        <span className={`badge bg-${{
+                                                        <div className="d-flex flex-column align-items-end gap-2">
+                                                            <span className={`badge bg-${{
                                                             confirmed: 'success',
                                                             cancelled: 'danger',
                                                             delayed: 'dark',
                                                             scheduled: 'warning',
                                                             postponed: 'info'
-                                                        }[appo.status] || 'dark'}`}>
-                                                            {{
+                                                            }[appo.status] || 'dark'}`}>
+                                                                {{
                                                                 confirmed: 'Confirmado',
                                                                 cancelled: 'Cancelado',
                                                                 delayed: 'Demorado',
                                                                 scheduled: 'Programado',
                                                                 postponed: 'Pospuesto'
-                                                            }[appo.status] || appo.status}
-                                                        </span>
+                                                                }[appo.status] || appo.status}
+                                                            </span>
+                                                            {appo.status !== "cancelled" && (
+                                                                <div className="dropdown" style={{ marginTop: "10px" }}>
+                                                                    <button className="btn btn-outline-dark btn-sm rounded-3 px-2 dropdown-toggle"
+                                                                        style={{ fontSize: "0.8rem" }}
+                                                                        data-bs-toggle="dropdown">
+                                                                        Acciones
+                                                                    </button>
+                                                                    <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                                                                        <li>
+                                                                            <button className="dropdown-item small"
+                                                                                disabled={appo.status !== "scheduled" && appo.status !== "delayed"}
+                                                                                onClick={() => updateAppointmentStatus(appo.id, "confirmed")}>
+                                                                                <i className="bi bi-check-circle me-2 text-success"></i>Confirmar
+                                                                            </button>
+                                                                        </li>
+                                                                        <li>
+                                                                            <button className="dropdown-item small"
+                                                                                disabled={appo.status !== "scheduled" && appo.status !== "confirmed" && appo.status !== "postponed"}
+                                                                                onClick={() => updateAppointmentStatus(appo.id, "delayed")}>
+                                                                                <i className="bi bi-clock-history me-2 text-warning"></i>Demora
+                                                                            </button>
+                                                                        </li>
+                                                                        <li><hr className="dropdown-divider" /></li>
+                                                                        <li>
+                                                                            <button className="dropdown-item small"
+                                                                                onClick={() => navigate(`/edit-appointment/${appo.id}`)}>
+                                                                                <i className="fa-regular fa-pen-to-square me-2"></i>Editar
+                                                                            </button>
+                                                                        </li>
+                                                                        <li>
+                                                                            <button className="dropdown-item small text-danger"
+                                                                                onClick={() => setCancellingAppo(appo)}>
+                                                                                <i className="bi bi-x-circle me-2 text-danger"></i>Cancelar
+                                                                            </button>
+                                                                        </li>
+                                                                    </ul>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))
