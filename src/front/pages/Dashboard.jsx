@@ -10,6 +10,8 @@ export const Dashboard = () => {
     const [notifications, setNotifications] = useState([]);
     const [generatedLink, setGeneratedLink] = useState("");
     const [toasts, setToasts] = useState([]);
+    const [cancellingAppo, setCancellingAppo] = useState(null);
+    const [cancelReason, setCancelReason] = useState("");
 
     const loadResetRequests = async () => {
         try {
@@ -107,7 +109,7 @@ export const Dashboard = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const updateStatus = async (appoId, newStatus) => {
+    const updateStatus = async (appoId, newStatus, reason = null) => {
         try {
             const resp = await fetch(
                 `${import.meta.env.VITE_BACKEND_URL}/api/appointments/${appoId}`,
@@ -117,7 +119,7 @@ export const Dashboard = () => {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ status: newStatus }),
+                    body: JSON.stringify({ status: newStatus, cancellation_reason: reason }),
                 }
             );
             if (resp.ok) {
@@ -130,7 +132,7 @@ export const Dashboard = () => {
 
     useEffect(() => {
         loadTodayAppointments();
-        loadResetRequests()
+        loadResetRequests();
     }, []);
 
     const today = new Date();
@@ -365,12 +367,9 @@ export const Dashboard = () => {
                                                         </button>
                                                     </li>
                                                     <li>
-                                                        <button
-                                                            className="dropdown-item small text-danger"
-                                                            disabled={appo.status === "cancelled"}
-                                                            onClick={() => updateStatus(appo.id, "cancelled")}>
-                                                            <i className="bi bi-x-circle me-2 text-danger"></i>
-                                                            Cancelar turno
+                                                        <button className="dropdown-item small text-danger" disabled={appo.status === "cancelled"}
+                                                            onClick={() => setCancellingAppo(appo)}>
+                                                            <i className="bi bi-x-circle me-2 text-danger"></i>Cancelar turno
                                                         </button>
                                                     </li>
                                                 </ul>
@@ -415,6 +414,52 @@ export const Dashboard = () => {
                     </div>
                 ))}
             </div>
+
+            {cancellingAppo && (
+                <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.6)", zIndex: 1090 }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content border-0 rounded-4 shadow">
+                            <div className="modal-header border-0">
+                                <h5 className="modal-title fw-bold text-danger">
+                                    <i className="bi bi-x-circle me-2"></i>Cancelar Turno
+                                </h5>
+                                <button type="button" className="btn-close" onClick={() => setCancellingAppo(null)}></button>
+                            </div>
+                            <div className="modal-body px-4">
+                                <p className="mb-1">
+                                    ¿Confirmas la cancelación del turno de <strong>{cancellingAppo.patient_name}</strong>?
+                                </p>
+                                <p className="text-muted small mb-3">
+                                    <i className="bi bi-clock me-1"></i>
+                                    {new Date(cancellingAppo.start_date_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — {cancellingAppo.procedure_name}
+                                </p>
+                                <div className="mb-2">
+                                    <label className="form-label fw-semibold">
+                                        Motivo de cancelación <span className="text-muted fw-normal">(opcional)</span>
+                                    </label>
+                                    <input type="text" className="form-control"
+                                        placeholder="Ej: Solicitud del paciente, reprogramación..."
+                                        value={cancelReason}
+                                        onChange={e => setCancelReason(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="modal-footer border-0">
+                                <button className="btn btn-light fw-bold" onClick={() => setCancellingAppo(null)}>
+                                    No, volver
+                                </button>
+                                <button className="btn btn-danger fw-bold px-4" onClick={async () => {
+                                    await updateStatus(cancellingAppo.id, "cancelled", cancelReason || null);
+                                    setCancellingAppo(null);
+                                    setCancelReason("");
+                                }}>
+                                    Sí, cancelar turno
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <AiAssistant appointments={todayAppointments} stats={stats} token={token} allAppointments={store.appointments} />
         </div>
     );
