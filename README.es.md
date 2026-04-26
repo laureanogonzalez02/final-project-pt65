@@ -9,6 +9,7 @@
 El core del proyecto está estructurado en una arquitectura cliente-servidor, donde el enfoque principal radica en una API RESTful robusta y un esquema de base de datos relacional optimizado, acompañados por un dashboard administrativo en React.
 
 ### Arquitectura Backend & Data (Core)
+
 - **Framework Principal:** Python con Flask.
 - **Base de Datos:** PostgreSQL para persistencia de datos relacionales.
 - **ORM & Migraciones:** SQLAlchemy y Flask-Migrate (Alembic) para el modelado de datos y control de versiones del esquema.
@@ -20,6 +21,7 @@ El core del proyecto está estructurado en una arquitectura cliente-servidor, do
   - `Message`, `Notification`, `AISuggestion` (Historial de comunicaciones, notificaciones asíncronas e integraciones con IA).
 
 ### Arquitectura Frontend (Mención Secundaria)
+
 - **Tecnología:** React + Vite.
 - **Objetivo:** Consumir de manera eficiente la API RESTful para proveer un dashboard interactivo de gestión (calendario, chat en tiempo real, administración de pacientes y turnos).
 
@@ -27,9 +29,10 @@ El core del proyecto está estructurado en una arquitectura cliente-servidor, do
 
 ## 👨‍💻 Mis Aportes y Rol en el Equipo
 
-Mi participación en el equipo estuvo fuertemente orientada al área de Backend Development, asumiendo la responsabilidad sobre la lógica de la información, el diseño de la API y la automatización de procesos. 
+Mi participación en el equipo estuvo fuertemente orientada al área de Backend Development, asumiendo la responsabilidad sobre la lógica de la información, el diseño de la API y la automatización de procesos.
 
 **Responsabilidades Clave y Logros:**
+
 - **Lógica de Negocio en Backend:** Desarrollé endpoints críticos para el flujo conversacional y la generación de turnos médicos. Implementé el backend para las **AI Suggestions**, diseñando la lógica que analiza interacciones y sugiere turnos de manera inteligente.
 - **Seguridad de Endpoints:** Me aseguré de que el acceso a las rutas críticas y el manejo de los payloads del sistema de usuarios y notificaciones cumplieran con las validaciones correspondientes y los estándares de acceso.
 - **Adaptabilidad y Resolución Frontend:** Ante bloqueos y cuellos de botella en la entrega del producto, demostré adaptabilidad asumiendo el rol de desarrollador Frontend en **React**. Construí componentes clave como la vista de Chat interactivo (integrando librerías especializadas) y programé la lógica de parámetros en la URL (`NewAppointment.jsx`) para que la interfaz se comunicara de forma transparente con el motor de IA del backend, garantizando así la entrega de la funcionalidad a tiempo.
@@ -41,11 +44,13 @@ Mi participación en el equipo estuvo fuertemente orientada al área de Backend 
 A continuación, se detallan los pasos exactos para levantar el entorno de desarrollo localmente, basados en los archivos de dependencias del proyecto.
 
 ### Requisitos Previos
+
 - Python 3.8+
 - Node.js 20.0.0+
 - PostgreSQL
 
 ### 1. Configuración del Backend (Python/Flask)
+
 Ubicarse en el directorio raíz del proyecto. El entorno utiliza `pipenv` para la gestión de paquetes:
 
 ```bash
@@ -72,6 +77,7 @@ pipenv run start
 ```
 
 ### 2. Configuración del Frontend (React/Vite)
+
 Abrir una nueva terminal en el directorio raíz del proyecto:
 
 ```bash
@@ -85,12 +91,28 @@ npm install
 npm run dev
 ```
 
+### 3. Twilio Webhook Setup (WhatsApp Integration)
+
+Para probar el chat de WhatsApp en local, es necesario exponer el puerto `3001` de la API a internet usando ngrok. Abre una nueva terminal y ejecuta:
+
+```bash
+# Exponer el puerto local 3001
+
+ngrok http 3001
+```
+
+Una vez ejecutado, ngrok generará una URL pública HTTPS. Debes configurar esta URL en el Sandbox de Twilio:
+
+1. Dirígete a la configuración del Sandbox de WhatsApp en tu consola de Twilio.
+2. Localiza el campo **'When a message comes in'**.
+3. Pega la URL HTTPS generada por ngrok apuntando al endpoint correspondiente del webhook (por ejemplo, `https://<tu-id-ngrok>.ngrok.app/api/webhook`).
+4. Guarda la configuración.
+
 ---
 
 ## 👥 Equipo / Contribuyentes
 
-- Laureano Gonzalez - Fullstack Developer | [LinkedIn] | [GitHub]
+- Laureano Gonzalez - Fullstack Developer | [[LinkedIn]](https://www.linkedin.com/in/laureano-gonzalez-dev/) | [[GitHub]](https://github.com/laureanogonzalez02)
 - [@Drokko-Dev](https://github.com/Drokko-Dev) - Jaime Vega
 - [@VicenteCastroIb](https://github.com/VicenteCastroIb) - Vicente Castro
 - [@Fragoz22](https://github.com/Fragoz22) - Francisco M. Gómez
-

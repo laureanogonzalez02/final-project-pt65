@@ -9,6 +9,7 @@
 The core of the project is structured on a client-server architecture, where the main focus lies on a robust RESTful API and an optimized relational database schema, accompanied by an administrative dashboard in React.
 
 ### Backend & Data Architecture (Core)
+
 - **Main Framework:** Python with Flask.
 - **Database:** PostgreSQL for relational data persistence.
 - **ORM & Migrations:** SQLAlchemy and Flask-Migrate (Alembic) for data modeling and schema version control.
@@ -20,6 +21,7 @@ The core of the project is structured on a client-server architecture, where the
   - `Message`, `Notification`, `AISuggestion` (Communication history, asynchronous notifications, and AI integrations).
 
 ### Frontend Architecture (Secondary Mention)
+
 - **Technology:** React + Vite.
 - **Objective:** Efficiently consume the RESTful API to provide an interactive management dashboard (calendar, real-time chat, patient and appointment administration).
 
@@ -30,6 +32,7 @@ The core of the project is structured on a client-server architecture, where the
 My participation in the team was strongly oriented towards Backend Development, taking responsibility for the information logic, API design, and process automation.
 
 **Key Responsibilities and Achievements:**
+
 - **Backend Business Logic:** I developed critical endpoints for conversational flow and medical appointment generation. I implemented the backend for **AI Suggestions**, designing the logic that analyzes interactions and suggests appointments intelligently.
 - **Endpoint Security:** I ensured that access to critical routes and payload handling for the user and notification systems complied with the corresponding validations and access standards.
 - **Adaptability and Frontend Resolution:** Faced with bottlenecks and blocks in product delivery, I demonstrated adaptability by taking on the role of Frontend developer in **React**. I built key components like the interactive Chat view (integrating specialized libraries) and programmed the URL parameter logic (`NewAppointment.jsx`) so the interface could communicate seamlessly with the backend's AI engine, guaranteeing the timely delivery of the feature.
@@ -41,11 +44,13 @@ My participation in the team was strongly oriented towards Backend Development, 
 Below are the exact steps to set up the development environment locally, based on the project's dependency files.
 
 ### Prerequisites
+
 - Python 3.8+
 - Node.js 20.0.0+
 - PostgreSQL
 
 ### 1. Backend Setup (Python/Flask)
+
 Navigate to the root directory of the project. The environment uses `pipenv` for package management:
 
 ```bash
@@ -72,6 +77,7 @@ pipenv run start
 ```
 
 ### 2. Frontend Setup (React/Vite)
+
 Open a new terminal in the root directory of the project:
 
 ```bash
@@ -85,12 +91,28 @@ npm install
 npm run dev
 ```
 
+### 3. Twilio Webhook Setup (WhatsApp Integration)
+
+To test the WhatsApp chat locally, you need to expose the API's port `3001` to the internet using ngrok. Open a new terminal and run:
+
+```bash
+# Expose local port 3001
+
+ngrok http 3001
+```
+
+After running the command, ngrok will generate a public HTTPS URL. You must configure this URL in your Twilio Sandbox:
+
+1. Go to your Twilio Console and navigate to the WhatsApp Sandbox settings.
+2. Locate the **'When a message comes in'** field.
+3. Paste the generated ngrok HTTPS URL, pointing to the corresponding webhook endpoint (e.g., `https://<your-ngrok-id>.ngrok.app/api/webhook`).
+4. Save the settings.
+
 ---
 
 ## 👥 Team / Contributors
 
-- Laureano Gonzalez - Fullstack Developer | [LinkedIn] | [GitHub]
+- Laureano Gonzalez - Fullstack Developer | [[LinkedIn]](https://www.linkedin.com/in/laureano-gonzalez-dev/) | [[GitHub]](https://github.com/laureanogonzalez02)
 - [@Drokko-Dev](https://github.com/Drokko-Dev) - Jaime Vega
 - [@VicenteCastroIb](https://github.com/VicenteCastroIb) - Vicente Castro
 - [@Fragoz22](https://github.com/Fragoz22) - Francisco M. Gómez
-
