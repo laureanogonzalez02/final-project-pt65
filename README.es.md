@@ -89,7 +89,7 @@ npm run dev
 
 ## 👥 Equipo / Contribuyentes
 
-- Laureano Gonzalez - Fullstack Developer | [LinkedIn] | [GitHub]
+- Laureano Gonzalez - Fullstack Developer | [[LinkedIn]](https://www.linkedin.com/in/laureano-gonzalez-dev/) | [[GitHub]](https://github.com/laureanogonzalez02)
 - [@Drokko-Dev](https://github.com/Drokko-Dev) - Jaime Vega
 - [@VicenteCastroIb](https://github.com/VicenteCastroIb) - Vicente Castro
 - [@Fragoz22](https://github.com/Fragoz22) - Francisco M. Gómez
