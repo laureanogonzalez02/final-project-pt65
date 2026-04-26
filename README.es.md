@@ -1,81 +1,96 @@
-# Plantilla de WebApp con React JS y Flask API
+# 🏥 ProceTurn AI - Sistema de Gestión Hospitalaria (API & Core)
 
-Construye aplicaciones web usando React.js para el front end y python/flask para tu API backend.
+**ProceTurn AI** es el resultado de un proyecto final integrador desarrollado bajo metodologías ágiles, diseñado para simular un entorno de trabajo real. El sistema provee una solución completa para la gestión de clínicas y hospitales, centrándose en el procesamiento eficiente de datos, la automatización de flujos mediante IA y la escalabilidad del Backend.
 
-- La documentación se puede encontrar aquí: https://4geeks.com/docs/start/react-flask-template
-- Aquí hay un video sobre [cómo usar esta plantilla](https://www.youtube.com/watch?v=qBz6Ddd2m38)
-- Integrado con Pipenv para la gestión de paquetes.
-- Despliegue rápido a Render [en solo unos pocos pasos aquí](https://4geeks.com/es/docs/start/despliega-con-render-com).
-- Uso del archivo .env.
-- Integración de SQLAlchemy para la abstracción de bases de datos.
+---
 
-### 1) Instalación:
+## 🏗️ Descripción y Arquitectura
 
-> Si usas Github Codespaces (recomendado) o Gitpod, esta plantilla ya vendrá con Python, Node y la base de datos Posgres instalados. Si estás trabajando localmente, asegúrate de instalar Python 3.10, Node.
+El core del proyecto está estructurado en una arquitectura cliente-servidor, donde el enfoque principal radica en una API RESTful robusta y un esquema de base de datos relacional optimizado, acompañados por un dashboard administrativo en React.
 
-Se recomienda instalar el backend primero, asegúrate de tener Python 3.10, Pipenv y un motor de base de datos (se recomienda Posgres).
+### Arquitectura Backend & Data (Core)
+- **Framework Principal:** Python con Flask.
+- **Base de Datos:** PostgreSQL para persistencia de datos relacionales.
+- **ORM & Migraciones:** SQLAlchemy y Flask-Migrate (Alembic) para el modelado de datos y control de versiones del esquema.
+- **Seguridad y Autenticación:** Flask-JWT-Extended para la protección de rutas y manejo de sesiones.
+- **Integraciones de Terceros:** Integración de endpoints para servicios de mensajería externa (WhatsApp vía Twilio) y un motor de IA para la sugerencia inteligente y prellenado de turnos médicos en base al historial del chat.
+- **Estructura de Datos (SQL):** El esquema está altamente normalizado para garantizar la integridad referencial. Incluye entidades como:
+  - `User`, `Patient` (Gestión de perfiles y seguridad).
+  - `Appointment`, `Procedure`, `Specialty`, `ProcedureAvailability` (Lógica de turnos, agendas y bloqueos de horarios).
+  - `Message`, `Notification`, `AISuggestion` (Historial de comunicaciones, notificaciones asíncronas e integraciones con IA).
 
-1. Instala los paquetes de python: `$ pipenv install`
-2. Crea un archivo .env basado en el .env.example: `$ cp .env.example .env`
-3. Instala tu motor de base de datos y crea tu base de datos, dependiendo de tu base de datos, debes crear una variable DATABASE_URL con uno de los valores posibles, asegúrate de reemplazar los valores con la información de tu base de datos:
+### Arquitectura Frontend (Mención Secundaria)
+- **Tecnología:** React + Vite.
+- **Objetivo:** Consumir de manera eficiente la API RESTful para proveer un dashboard interactivo de gestión (calendario, chat en tiempo real, administración de pacientes y turnos).
 
-| Motor     | DATABASE_URL                                        |
-| --------- | --------------------------------------------------- |
-| SQLite    | sqlite:////test.db                                  |
-| MySQL     | mysql://username:password@localhost:port/example    |
-| Postgres  | postgres://username:password@localhost:5432/example |
+---
 
-4. Migra las migraciones: `$ pipenv run migrate` (omite si no has hecho cambios en los modelos en `./src/api/models.py`)
-5. Ejecuta las migraciones: `$ pipenv run upgrade`
-6. Ejecuta la aplicación: `$ pipenv run start`
+## 👨‍💻 Mis Aportes y Rol en el Equipo
 
-> Nota: Los usuarios de Codespaces pueden conectarse a psql escribiendo: `psql -h localhost -U gitpod example`
+Mi participación en el equipo estuvo fuertemente orientada al área de Backend Development, asumiendo la responsabilidad sobre la lógica de la información, el diseño de la API y la automatización de procesos. 
 
-### Deshacer una migración
+**Responsabilidades Clave y Logros:**
+- **Lógica de Negocio en Backend:** Desarrollé endpoints críticos para el flujo conversacional y la generación de turnos médicos. Implementé el backend para las **AI Suggestions**, diseñando la lógica que analiza interacciones y sugiere turnos de manera inteligente.
+- **Seguridad de Endpoints:** Me aseguré de que el acceso a las rutas críticas y el manejo de los payloads del sistema de usuarios y notificaciones cumplieran con las validaciones correspondientes y los estándares de acceso.
+- **Adaptabilidad y Resolución Frontend:** Ante bloqueos y cuellos de botella en la entrega del producto, demostré adaptabilidad asumiendo el rol de desarrollador Frontend en **React**. Construí componentes clave como la vista de Chat interactivo (integrando librerías especializadas) y programé la lógica de parámetros en la URL (`NewAppointment.jsx`) para que la interfaz se comunicara de forma transparente con el motor de IA del backend, garantizando así la entrega de la funcionalidad a tiempo.
 
-También puedes deshacer una migración ejecutando
+---
 
-```sh
-$ pipenv run downgrade
+## 🚀 Despliegue Local
+
+A continuación, se detallan los pasos exactos para levantar el entorno de desarrollo localmente, basados en los archivos de dependencias del proyecto.
+
+### Requisitos Previos
+- Python 3.8+
+- Node.js 20.0.0+
+- PostgreSQL
+
+### 1. Configuración del Backend (Python/Flask)
+Ubicarse en el directorio raíz del proyecto. El entorno utiliza `pipenv` para la gestión de paquetes:
+
+```bash
+# 1. Instalar dependencias del proyecto
+
+pipenv install
+
+# 2. Configurar variables de entorno
+# 💡 Nota sobre la Base de Datos:
+# - Por defecto (sin configuración adicional), el sistema utilizará SQLite localmente.
+# - Si deseas correrlo en PostgreSQL, simplemente define la variable en tu .env:
+#   DATABASE_URL="postgresql://usuario:password@localhost:5432/nombre_db"
+
+cp .env.example .env
+
+# 3. Migrar la base de datos
+
+pipenv run upgrade
+
+# 4. Levantar el servidor Flask
+# La API quedará escuchando en http://localhost:3001
+
+pipenv run start
 ```
 
-### Población de la tabla de usuarios en el backend
+### 2. Configuración del Frontend (React/Vite)
+Abrir una nueva terminal en el directorio raíz del proyecto:
 
-Para insertar usuarios de prueba en la base de datos, ejecuta el siguiente comando:
+```bash
+# 1. Instalar las dependencias de Node.js
 
-```sh
-$ flask insert-test-users 5
+npm install
+
+# 2. Levantar el servidor de desarrollo de Vite
+# El entorno local de desarrollo de React estará disponible en el puerto indicado (por ej. http://localhost:5173)
+
+npm run dev
 ```
 
-Y verás el siguiente mensaje:
+---
 
-```
-    Creating test users
-    test_user1@test.com created.
-    test_user2@test.com created.
-    test_user3@test.com created.
-    test_user4@test.com created.
-    test_user5@test.com created.
-    Users created successfully!
-```
+## 👥 Equipo / Contribuyentes
 
-### **Nota importante para la base de datos y los datos dentro de ella**
+- Laureano Gonzalez - Fullstack Developer | [LinkedIn] | [GitHub]
+- [@Drokko-Dev](https://github.com/Drokko-Dev) - Jaime Vega
+- [@VicenteCastroIb](https://github.com/VicenteCastroIb) - Vicente Castro
+- [@Fragoz22](https://github.com/Fragoz22) - Francisco M. Gómez
 
-Cada entorno de Github Codespace tendrá **su propia base de datos**, por lo que si estás trabajando con más personas, cada uno tendrá una base de datos diferente y diferentes registros dentro de ella. Estos datos **se perderán**, así que no pases demasiado tiempo creando registros manualmente para pruebas, en su lugar, puedes automatizar la adición de registros a tu base de datos editando el archivo ```commands.py``` dentro de la carpeta ```/src/api```. Edita la línea 32 de la función ```insert_test_data``` para insertar los datos según tu modelo (usa la función ```insert_test_users``` anterior como ejemplo). Luego, todo lo que necesitas hacer es ejecutar ```pipenv run insert-test-data```.
-
-### Instalación manual del Front-End:
-
--   Asegúrate de estar usando la versión 20 de node y de que ya hayas instalado y ejecutado correctamente el backend.
-
-1. Instala los paquetes: `$ npm install`
-2. ¡Empieza a codificar! inicia el servidor de desarrollo de webpack `$ npm run start`
-
-## ¡Publica tu sitio web!
-
-Esta plantilla está 100% lista para desplegarse con Render.com y Heroku en cuestión de minutos. Por favor, lee la [documentación oficial al respecto](https://4geeks.com/docs/start/deploy-to-render-com).
-
-### Contribuyentes
-
-Esta plantilla fue construida como parte del [Coding Bootcamp](https://4geeksacademy.com/us/coding-bootcamp) de 4Geeks Academy por [Alejandro Sanchez](https://twitter.com/alesanchezr) y muchos otros contribuyentes. Descubre más sobre nuestro [Curso de Desarrollador Full Stack](https://4geeksacademy.com/us/coding-bootcamps/part-time-full-stack-developer) y [Bootcamp de Ciencia de Datos](https://4geeksacademy.com/us/coding-bootcamps/datascience-machine-learning).
-
-Puedes encontrar otras plantillas y recursos como este en la [página de github de la escuela](https://github.com/4geeksacademy/).

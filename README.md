@@ -1,81 +1,96 @@
-# WebApp boilerplate with React JS and Flask API
+# 🏥 ProceTurn AI - Hospital Management System (API & Core)
 
-Build web applications using React.js for the front end and python/flask for your backend API.
+**ProceTurn AI** is the result of a final capstone project developed under agile methodologies, designed to simulate a real work environment. The system provides a complete solution for clinic and hospital management, focusing on efficient data processing, AI-driven workflow automation, and Backend scalability.
 
-- Documentation can be found here: https://4geeks.com/docs/start/react-flask-template
-- Here is a video on [how to use this template](https://www.loom.com/share/f37c6838b3f1496c95111e515e83dd9b)
-- Integrated with Pipenv for package managing.
-- Fast deployment to Render [in just a few steps here](https://4geeks.com/docs/start/deploy-to-render-com).
-- Use of .env file.
-- SQLAlchemy integration for database abstraction.
+---
 
-### 1) Installation:
+## 🏗️ Description and Architecture
 
-> If you use Github Codespaces (recommended) or Gitpod this template will already come with Python, Node and the Posgres Database installed. If you are working locally make sure to install Python 3.10, Node 
+The core of the project is structured on a client-server architecture, where the main focus lies on a robust RESTful API and an optimized relational database schema, accompanied by an administrative dashboard in React.
 
-It is recomended to install the backend first, make sure you have Python 3.10, Pipenv and a database engine (Posgress recomended)
+### Backend & Data Architecture (Core)
+- **Main Framework:** Python with Flask.
+- **Database:** PostgreSQL for relational data persistence.
+- **ORM & Migrations:** SQLAlchemy and Flask-Migrate (Alembic) for data modeling and schema version control.
+- **Security & Authentication:** Flask-JWT-Extended for route protection and session management.
+- **Third-Party Integrations:** Endpoint integration for external messaging services (WhatsApp via Twilio) and an AI engine for intelligent medical appointment suggestions and pre-filling based on chat history.
+- **Data Structure (SQL):** The schema is highly normalized to guarantee referential integrity. It includes entities such as:
+  - `User`, `Patient` (Profile and security management).
+  - `Appointment`, `Procedure`, `Specialty`, `ProcedureAvailability` (Appointment logic, agendas, and schedule blocking).
+  - `Message`, `Notification`, `AISuggestion` (Communication history, asynchronous notifications, and AI integrations).
 
-1. Install the python packages: `$ pipenv install`
-2. Create a .env file based on the .env.example: `$ cp .env.example .env`
-3. Install your database engine and create your database, depending on your database you have to create a DATABASE_URL variable with one of the possible values, make sure you replace the valudes with your database information:
+### Frontend Architecture (Secondary Mention)
+- **Technology:** React + Vite.
+- **Objective:** Efficiently consume the RESTful API to provide an interactive management dashboard (calendar, real-time chat, patient and appointment administration).
 
-| Engine    | DATABASE_URL                                        |
-| --------- | --------------------------------------------------- |
-| SQLite    | sqlite:////test.db                                  |
-| MySQL     | mysql://username:password@localhost:port/example    |
-| Postgress | postgres://username:password@localhost:5432/example |
+---
 
-4. Migrate the migrations: `$ pipenv run migrate` (skip if you have not made changes to the models on the `./src/api/models.py`)
-5. Run the migrations: `$ pipenv run upgrade`
-6. Run the application: `$ pipenv run start`
+## 👨‍💻 My Contributions and Role in the Team
 
-> Note: Codespaces users can connect to psql by typing: `psql -h localhost -U gitpod example`
+My participation in the team was strongly oriented towards Backend Development, taking responsibility for the information logic, API design, and process automation.
 
-### Undo a migration
+**Key Responsibilities and Achievements:**
+- **Backend Business Logic:** I developed critical endpoints for conversational flow and medical appointment generation. I implemented the backend for **AI Suggestions**, designing the logic that analyzes interactions and suggests appointments intelligently.
+- **Endpoint Security:** I ensured that access to critical routes and payload handling for the user and notification systems complied with the corresponding validations and access standards.
+- **Adaptability and Frontend Resolution:** Faced with bottlenecks and blocks in product delivery, I demonstrated adaptability by taking on the role of Frontend developer in **React**. I built key components like the interactive Chat view (integrating specialized libraries) and programmed the URL parameter logic (`NewAppointment.jsx`) so the interface could communicate seamlessly with the backend's AI engine, guaranteeing the timely delivery of the feature.
 
-You are also able to undo a migration by running
+---
 
-```sh
-$ pipenv run downgrade
+## 🚀 Local Deployment
+
+Below are the exact steps to set up the development environment locally, based on the project's dependency files.
+
+### Prerequisites
+- Python 3.8+
+- Node.js 20.0.0+
+- PostgreSQL
+
+### 1. Backend Setup (Python/Flask)
+Navigate to the root directory of the project. The environment uses `pipenv` for package management:
+
+```bash
+# 1. Install project dependencies
+
+pipenv install
+
+# 2. Configure environment variables
+# 💡 Database configuration note:
+# - By default (without additional configuration), the system will use a local SQLite database.
+# - If you want to run it with PostgreSQL, simply define the variable in your .env:
+#   DATABASE_URL="postgresql://user:password@localhost:5432/db_name"
+
+cp .env.example .env
+
+# 3. Migrate the database
+
+pipenv run upgrade
+
+# 4. Start the Flask server
+# The API will be listening on http://localhost:3001
+
+pipenv run start
 ```
 
-### Backend Populate Table Users
+### 2. Frontend Setup (React/Vite)
+Open a new terminal in the root directory of the project:
 
-To insert test users in the database execute the following command:
+```bash
+# 1. Install Node.js dependencies
 
-```sh
-$ flask insert-test-users 5
+npm install
+
+# 2. Start the Vite development server
+# The local React development environment will be available on the indicated port (e.g., http://localhost:5173)
+
+npm run dev
 ```
 
-And you will see the following message:
+---
 
-```
-  Creating test users
-  test_user1@test.com created.
-  test_user2@test.com created.
-  test_user3@test.com created.
-  test_user4@test.com created.
-  test_user5@test.com created.
-  Users created successfully!
-```
+## 👥 Team / Contributors
 
-### **Important note for the database and the data inside it**
+- Laureano Gonzalez - Fullstack Developer | [LinkedIn] | [GitHub]
+- [@Drokko-Dev](https://github.com/Drokko-Dev) - Jaime Vega
+- [@VicenteCastroIb](https://github.com/VicenteCastroIb) - Vicente Castro
+- [@Fragoz22](https://github.com/Fragoz22) - Francisco M. Gómez
 
-Every Github codespace environment will have **its own database**, so if you're working with more people eveyone will have a different database and different records inside it. This data **will be lost**, so don't spend too much time manually creating records for testing, instead, you can automate adding records to your database by editing ```commands.py``` file inside ```/src/api``` folder. Edit line 32 function ```insert_test_data``` to insert the data according to your model (use the function ```insert_test_users``` above as an example). Then, all you need to do is run ```pipenv run insert-test-data```.
-
-### Front-End Manual Installation:
-
--   Make sure you are using node version 20 and that you have already successfully installed and runned the backend.
-
-1. Install the packages: `$ npm install`
-2. Start coding! start the webpack dev server `$ npm run start`
-
-## Publish your website!
-
-This boilerplate it's 100% read to deploy with Render.com and Heroku in a matter of minutes. Please read the [official documentation about it](https://4geeks.com/docs/start/deploy-to-render-com).
-
-### Contributors
-
-This template was built as part of the 4Geeks Academy [Coding Bootcamp](https://4geeksacademy.com/us/coding-bootcamp) by [Alejandro Sanchez](https://twitter.com/alesanchezr) and many other contributors. Find out more about our [Full Stack Developer Course](https://4geeksacademy.com/us/coding-bootcamps/part-time-full-stack-developer), and [Data Science Bootcamp](https://4geeksacademy.com/us/coding-bootcamps/datascience-machine-learning).
-
-You can find other templates and resources like this at the [school github page](https://github.com/4geeksacademy/).

@@ -1046,6 +1046,15 @@ def get_ai_chat_suggestion():
             if not ai_result.get("procedure_id") and not ai_result.get("specialty_id"):
                 return jsonify({"detected_procedure": None, "available_slots": [], "is_expired": is_expired}), 200
         else:
+             
+            if patient.last_ai_message_id:
+                found = any(m.id == patient.last_ai_message_id for m in recent_messages)
+                if not found:
+                    patient.last_ai_message_id = None
+                    patient.ai_detected_procedure_id = None
+                    patient.ai_detected_specialty_id = None
+                    db.session.commit()
+            
             conversation = "\n".join([f"- {m.body}" for m in reversed(recent_messages)])
 
             procedure_list = "\n".join([f"- ID {p.id}: {p.name} (Especialidad ID {p.specialty_id})" for p in all_procedures])
