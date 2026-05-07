@@ -1,6 +1,6 @@
 # 🏥 ProceTurn AI - Hospital Management System (API & Core)
 
-**ProceTurn AI** is the result of a final capstone project developed under agile methodologies, designed to simulate a real work environment. The system provides a complete solution for clinic and hospital management, focusing on efficient data processing, AI-driven workflow automation, and Backend scalability.
+**ProceTurn AI** is the result of a final capstone project developed at 4Geeks Academy under agile methodologies, designed to simulate a real work environment. The system provides a complete solution for clinic and hospital management, focusing on efficient data processing, AI-driven workflow automation, and Backend scalability.
 
 ---
 
